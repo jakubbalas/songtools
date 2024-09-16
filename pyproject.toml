@@ -1,0 +1,18 @@
+[project]
+name = "songtools"
+version = "0.1.0"
+description = "Tools for working with my song files and collections."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ruff>=0.6.5",
+    "pre-commit>=3.8.0",
+    "click>=8.1.7",
+    "loguru>=0.7.2",
+    "pytest>=8.3.3",
+    "mutagen>=1.47.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
