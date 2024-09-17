@@ -7,7 +7,10 @@ IRRELEVANT_SUFFIXES = [".jpg", ".png", ".m3u", ".nfo", ".cue", ".txt"]
 def clean_preimport_folder(backlog_folder: Path) -> None:
     """Take the backlog folder and clean it.
     It will:
+     - Remove all irrelevant files from the backlog folder
      - Remove all empty folders recursively
+
+    The order of operations is important!
 
     :param Path backlog_folder: Root path to the backlog folder
     """
