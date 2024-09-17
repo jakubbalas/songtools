@@ -1,4 +1,5 @@
 import io
+import pytest
 import mutagen.id3 as mt_id3
 from mutagen.mp3 import MP3
 from pathlib import Path
@@ -40,6 +41,17 @@ def cleanup_tst_folder() -> None:
                     pass
     root_tst_folder.rmdir()
     pass
+
+
+@pytest.fixture
+def test_folder() -> Path:
+    """Fixture to create a test folder and clean it up after the test is done.
+
+    :yields: Test folder path.
+    """
+    folder = get_test_folder()
+    yield folder
+    cleanup_tst_folder()
 
 
 def create_test_mp3_data() -> io.BytesIO:
