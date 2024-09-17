@@ -20,10 +20,26 @@ def get_test_folder() -> Path:
 
 def cleanup_tst_folder() -> None:
     """Remove all files from the test folder and the folder itself"""
-    tst_folder = get_test_folder()
-    for file in tst_folder.iterdir():
-        file.unlink()
-    tst_folder.rmdir()
+    root_tst_folder = get_test_folder()
+    nst = 0
+    while True and nst < 100:
+        test_folder_items = root_tst_folder.rglob("*")
+        items = list(test_folder_items)
+        if not items:
+            break
+        for item in items:
+            if TEST_FOLDER not in str(item.resolve()):
+                raise Exception("Trying to delete a folder outside the test folder")
+            if item.is_file():
+                item.unlink()
+            else:
+                try:
+                    item.rmdir()
+                except OSError:
+                    # Run again after files were removed
+                    pass
+    root_tst_folder.rmdir()
+    pass
 
 
 def create_test_mp3_data() -> io.BytesIO:
