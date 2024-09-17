@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from songtools.backlog import clean_backlog_folder, IRRELEVANT_SUFFIXES
+from songtools.backlog import clean_preimport_folder, IRRELEVANT_SUFFIXES
 
 
 def _prepare_dirty_backlog_folder(root_folder: Path) -> Path:
@@ -25,13 +25,13 @@ def _prepare_dirty_backlog_folder(root_folder: Path) -> Path:
 
 def test_remove_empty_dirs_from_backlog(test_folder: Path):
     tst_folder = _prepare_dirty_backlog_folder(test_folder)
-    clean_backlog_folder(tst_folder)
+    clean_preimport_folder(tst_folder)
     assert not (tst_folder / "empty_folder_a").exists()
 
 
 def test_remove_irrelevant_files_from_backlog(test_folder):
     tst_folder = _prepare_dirty_backlog_folder(test_folder)
-    clean_backlog_folder(tst_folder)
+    clean_preimport_folder(tst_folder)
     # specifically not automating this to better see what's going on
     assert not (tst_folder / "folder_with_rubbish/irrelevant_file.txt").exists()
     assert not (tst_folder / "folder_with_rubbish/irrelevant_file.jpg").exists()

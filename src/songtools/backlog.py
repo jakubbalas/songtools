@@ -4,7 +4,7 @@ from pathlib import Path
 IRRELEVANT_SUFFIXES = [".jpg", ".png", ".m3u", ".nfo", ".cue", ".txt"]
 
 
-def clean_backlog_folder(backlog_folder: Path) -> None:
+def clean_preimport_folder(backlog_folder: Path) -> None:
     """Take the backlog folder and clean it.
     It will:
      - Remove all empty folders recursively
