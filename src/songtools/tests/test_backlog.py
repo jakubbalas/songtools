@@ -50,3 +50,10 @@ def test_remove_files_with_cyrillic(test_folder):
     tst_folder = _prepare_dirty_backlog_folder(test_folder)
     clean_preimport_folder(tst_folder)
     assert tst_folder / "mixed_folder/cyrillic_file_тест.mp3"
+
+
+def test_expected_folder_structure_after_cleanup(test_folder):
+    tst_folder = _prepare_dirty_backlog_folder(test_folder)
+    clean_preimport_folder(tst_folder)
+    items = [f for f in test_folder.glob("*")]
+    assert len(items) == 0

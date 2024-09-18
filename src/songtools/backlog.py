@@ -19,6 +19,7 @@ def clean_preimport_folder(backlog_folder: Path) -> None:
     :param Path backlog_folder: Root path to the backlog folder
     """
     remove_irrelevant_files(backlog_folder)
+    remove_files_with_cyrilic(backlog_folder)
     remove_empty_folders(backlog_folder)
 
 
