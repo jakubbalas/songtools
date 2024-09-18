@@ -1,8 +1,9 @@
 import re
-from pathlib import Path
+
+from songtools.song_file_types import SongFile
 
 
-def get_filename_from_metadata(file: Path) -> str:
+def rename_song(song: SongFile) -> str:
     """Get the filename from the metadata of the file.
     If the file has no metadata, return the styled filename.
 
