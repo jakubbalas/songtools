@@ -20,16 +20,21 @@ def _prepare_dirty_backlog_folder(root_folder: Path) -> Path:
         irrelevant_suffix = folder_with_rubbish / f"irrelevant_file{suffix}"
         irrelevant_suffix.touch()
 
+    mixed_folder = root_folder / "mixed_folder"
+    mixed_folder.mkdir(exist_ok=True)
+    cyrillic_file = mixed_folder / "cyrillic_file_тест.mp3"
+    cyrillic_file.touch()
     return root_folder
 
 
-def test_remove_empty_dirs_from_backlog(test_folder: Path):
+def test_remove_empty_dirs(test_folder: Path):
     tst_folder = _prepare_dirty_backlog_folder(test_folder)
     clean_preimport_folder(tst_folder)
     assert not (tst_folder / "empty_folder_a").exists()
+    assert not (tst_folder / "folder_with_rubbish").exists()
 
 
-def test_remove_irrelevant_files_from_backlog(test_folder):
+def test_remove_irrelevant_files(test_folder):
     tst_folder = _prepare_dirty_backlog_folder(test_folder)
     clean_preimport_folder(tst_folder)
     # specifically not automating this to better see what's going on
@@ -39,3 +44,9 @@ def test_remove_irrelevant_files_from_backlog(test_folder):
     assert not (tst_folder / "folder_with_rubbish/irrelevant_file.m3u").exists()
     assert not (tst_folder / "folder_with_rubbish/irrelevant_file.nfo").exists()
     assert not (tst_folder / "folder_with_rubbish/irrelevant_file.cue").exists()
+
+
+def test_remove_files_with_cyrillic(test_folder):
+    tst_folder = _prepare_dirty_backlog_folder(test_folder)
+    clean_preimport_folder(tst_folder)
+    assert tst_folder / "mixed_folder/cyrillic_file_тест.mp3"

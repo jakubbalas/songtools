@@ -1,7 +1,11 @@
 from pathlib import Path
+from songtools.naming import has_cyrillic
 
 
 IRRELEVANT_SUFFIXES = [".jpg", ".png", ".m3u", ".nfo", ".cue", ".txt"]
+SUPPORTED_MUSIC_TYPES = [
+    ".mp3",
+]
 
 
 def clean_preimport_folder(backlog_folder: Path) -> None:
@@ -49,3 +53,14 @@ def remove_irrelevant_files(root_path: Path) -> None:
     for folder in root_path.rglob("*"):
         if folder.is_file() and folder.suffix in IRRELEVANT_SUFFIXES:
             folder.unlink()
+
+
+def remove_files_with_cyrilic(root_path: Path) -> None:
+    """Remove all files that have cyrillic characters in their name.
+    It is overwhelmingly Rap and pop that I don't keep.
+
+    :param Path root_path: Root path to the backlog folder
+    """
+    for f in root_path.rglob("*"):
+        if f.is_file() and has_cyrillic(f.name):
+            f.unlink()
