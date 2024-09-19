@@ -54,6 +54,19 @@ def test_folder() -> Path:
     cleanup_tst_folder()
 
 
+@pytest.fixture
+def test_mp3_data(test_folder) -> bytes:
+    """Load empty mp3 file.
+
+    :param Path test_folder: Test folder path.
+
+    :rtype: bytes
+    :return: MP3 file data.
+    """
+    mp3_path = Path(__file__).parent / "tests/fixtures/silence20s.mp3"
+    return mp3_path.read_bytes()
+
+
 def create_test_mp3_data() -> io.BytesIO:
     """Create an empty MP3 file with some basic ID3 tags.
 
