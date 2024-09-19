@@ -12,7 +12,9 @@ def rename_song(song: SongFile) -> str:
     :rtype: str
     :return: Filename from the metadata.
     """
-    pass
+    artists = song.get_artists()
+    song.get_title()
+    return ", ".join(artists) + " - " + song.get_title()
 
 
 def has_cyrillic(text: str):
