@@ -1,9 +1,12 @@
 import pytest
+from songtools.conftest import create_test_mp3_data, MetadataFields
 from pathlib import Path
-from mutagen import id3
-from mutagen.mp3 import MP3
 
-from songtools.song_file_types import get_song_file, MP3File, UnsupportedSongType
+from songtools.song_file_types import (
+    get_song_file,
+    UnsupportedSongType,
+    UnableToExtractData,
+)
 
 
 def test_missing_song_file_raises_error():
@@ -18,22 +21,25 @@ def test_unsupported_song_file_raises_error(test_folder: Path):
         get_song_file(unsupported_file)
 
 
-def test_mp3_is_created(test_folder: Path):
-    mp3_file = test_folder / "test.mp3"
+def test_mp3_without_data_raises_exceptio(test_folder: Path):
+    mp3_file = test_folder / "test_no_dash.mp3"
     mp3_file.touch()
-    mp3_file = get_song_file(mp3_file)
-    assert type(mp3_file) is MP3File
+
+    with pytest.raises(UnableToExtractData):
+        get_song_file(mp3_file)
+
+    mp3_file = test_folder / "test-too-many_dashes.mp3"
+    mp3_file.touch()
+
+    with pytest.raises(UnableToExtractData):
+        get_song_file(mp3_file)
 
 
-def test_mp3_gets_data_from_metadata(test_folder: Path, test_mp3_data):
+def test_mp3_gets_data_from_metadata(test_folder: Path):
     test_mp3_file = test_folder / "test_art - test.mp3"
-    test_mp3_file.write_bytes(test_mp3_data)
 
-    audio = MP3(test_mp3_file, ID3=id3.ID3)
-    audio.add_tags()
-    audio["TPE1"] = id3.TPE1(encoding=3, text="Chi:mera, Jake DaPhunk")
-    audio["TIT2"] = id3.TIT2(encoding=3, text="My awesome song")
-    audio.save(test_mp3_file)
+    mt = MetadataFields(artist="Chi:mera, Jake DaPhunk", title="My awesome song")
+    test_mp3_file.write_bytes(create_test_mp3_data(mt))
 
     song = get_song_file(test_mp3_file)
     assert song.get_artists() == ["Chi:mera", "Jake DaPhunk"]
@@ -41,14 +47,10 @@ def test_mp3_gets_data_from_metadata(test_folder: Path, test_mp3_data):
 
 
 def test_mp3_gets_artist_and_title_from_filename_if_metadata_doesnt_contain_it(
-    test_folder: Path, test_mp3_data
+    test_folder: Path,
 ):
     test_mp3_file = test_folder / "jdp - glowing skies.mp3"
-    test_mp3_file.write_bytes(test_mp3_data)
-
-    audio = MP3(test_mp3_file, ID3=id3.ID3)
-    audio.add_tags()
-    audio.save(test_mp3_file)
+    test_mp3_file.write_bytes(create_test_mp3_data(metadata=True))
 
     song = get_song_file(test_mp3_file)
     assert song.get_artists() == [

@@ -1,3 +1,4 @@
+from songtools.conftest import create_test_mp3_data, MetadataFields
 from pathlib import Path
 
 from songtools.backlog import clean_preimport_folder, IRRELEVANT_SUFFIXES
@@ -22,8 +23,14 @@ def _prepare_dirty_backlog_folder(root_folder: Path) -> Path:
 
     mixed_folder = root_folder / "mixed_folder"
     mixed_folder.mkdir(exist_ok=True)
-    cyrillic_file = mixed_folder / "cyrillic_file_тест.mp3"
+    cyrillic_file = mixed_folder / "cyrillic-file_тест.mp3"
     cyrillic_file.touch()
+
+    cyrillic_in_meta_file = mixed_folder / "jdpouch - shouldwork.mp3"
+    mf = MetadataFields(title="Song тест", artist="JdPouch")
+    data = create_test_mp3_data(mf)
+    cyrillic_in_meta_file.write_bytes(data)
+
     return root_folder
 
 

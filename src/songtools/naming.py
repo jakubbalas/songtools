@@ -3,18 +3,16 @@ import re
 from songtools.song_file_types import SongFile
 
 
-def rename_song(song: SongFile) -> str:
+def build_correct_song_name(song: SongFile) -> str:
     """Get the filename from the metadata of the file.
     If the file has no metadata, return the styled filename.
 
-    :param Path file: Path to the file.
+    :param SongFile song: SongFile object containing metadata.
 
     :rtype: str
-    :return: Filename from the metadata.
+    :return: Valid filename that can be used.
     """
-    artists = song.get_artists()
-    song.get_title()
-    return ", ".join(artists) + " - " + song.get_title()
+    return ", ".join(song.get_artists()) + " - " + song.get_title()
 
 
 def has_cyrillic(text: str):

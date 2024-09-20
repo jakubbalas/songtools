@@ -1,6 +1,7 @@
 from pathlib import Path
-from songtools.naming import has_cyrillic
 
+from songtools.naming import has_cyrillic, build_correct_song_name
+from songtools.song_file_types import get_song_file
 
 IRRELEVANT_SUFFIXES = [".jpg", ".png", ".m3u", ".nfo", ".cue", ".txt"]
 SUPPORTED_MUSIC_TYPES = [
@@ -8,19 +9,15 @@ SUPPORTED_MUSIC_TYPES = [
 ]
 
 
-def clean_preimport_folder(backlog_folder: Path) -> None:
-    """Take the backlog folder and clean it.
-    It will:
-     - Remove all irrelevant files from the backlog folder
-     - Remove all empty folders recursively
+def rename_songs_from_metadata(root_path: Path) -> None:
+    for f in root_path.rglob("*"):
+        if f.is_dir() or f.suffix not in SUPPORTED_MUSIC_TYPES:
+            continue
 
-    The order of operations is important!
-
-    :param Path backlog_folder: Root path to the backlog folder
-    """
-    remove_irrelevant_files(backlog_folder)
-    remove_files_with_cyrilic(backlog_folder)
-    remove_empty_folders(backlog_folder)
+        song = get_song_file(f)
+        new_name = build_correct_song_name(song)
+        if new_name.lower() != f.stem.lower():  # Some filesystems don't like casing
+            f.rename(f.with_name(new_name))
 
 
 def remove_empty_folders(root_path: Path) -> None:
@@ -65,3 +62,19 @@ def remove_files_with_cyrilic(root_path: Path) -> None:
     for f in root_path.rglob("*"):
         if f.is_file() and has_cyrillic(f.name):
             f.unlink()
+
+
+def clean_preimport_folder(backlog_folder: Path) -> None:
+    """Take the backlog folder and clean it.
+    It will:
+     - Remove all irrelevant files from the backlog folder
+     - Remove all empty folders recursively
+
+    The order of operations is important!
+
+    :param Path backlog_folder: Root path to the backlog folder
+    """
+    remove_irrelevant_files(backlog_folder)
+    rename_songs_from_metadata(backlog_folder)
+    remove_files_with_cyrilic(backlog_folder)
+    remove_empty_folders(backlog_folder)

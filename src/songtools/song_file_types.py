@@ -9,12 +9,18 @@ class UnsupportedSongType(Exception):
     pass
 
 
+class UnableToExtractData(Exception):
+    pass
+
+
 class SongFile(ABC):
     def __init__(self, path: Path):
         self.path = path
         try:
             self.metadata = mutagen.File(path)
         except mutagen.MutagenError:
+            if path.stem.count("-") != 1:
+                raise UnableToExtractData()
             click.secho(f"Could not read metadata from file {path}.", fg="yellow")
             self.metadata = None
 

@@ -1,4 +1,6 @@
 import io
+from dataclasses import dataclass
+
 import pytest
 import mutagen.id3 as mt_id3
 from mutagen.mp3 import MP3
@@ -67,7 +69,15 @@ def test_mp3_data(test_folder) -> bytes:
     return mp3_path.read_bytes()
 
 
-def create_test_mp3_data() -> io.BytesIO:
+@dataclass
+class MetadataFields:
+    title: str
+    artist: str
+
+
+def create_test_mp3_data(
+    metadata: MetadataFields | bool | None = None, duration: int = 1
+) -> bytes:
     """Create an empty MP3 file with some basic ID3 tags.
 
     :rtype: io.BytesIO
@@ -85,14 +95,23 @@ def create_test_mp3_data() -> io.BytesIO:
         b"\xa5\xa5\xa5\xa5\xa5\xa5\xae\xae\xae\xae\xae\xb6\xb6\xb6\xb6\xb6\xb6\xbe\xbe\xbe\xbe\xbe"
         b"\xf7\xf7\xf7\xf7\xf7\xf7\xff\xff\xff\xff\xff\x00\x00\x00PLAME3.100\x04\xb9"
         b"\x00\x00\x00\x00\x00\x00\x00\x005 $\x06qM"
-        b"\x00" * 128  # Simulate empty MP3 file
+        b"\x00" * (128 * duration)  # Simulate empty MP3 file
     )
+
+    if metadata is True:
+        # For testing non-existing fields
+        mp3_data.seek(0)
+        audio = MP3(mp3_data, ID3=mt_id3.ID3)
+        audio.add_tags()
+        audio.save(mp3_data)
+
+    elif type(metadata) is MetadataFields:
+        mp3_data.seek(0)
+        audio = MP3(mp3_data, ID3=mt_id3.ID3)
+        audio.add_tags()
+        audio["TIT2"] = mt_id3.TIT2(encoding=3, text=metadata.title)
+        audio["TPE1"] = mt_id3.TPE1(encoding=3, text=metadata.artist)
+        audio.save(mp3_data)
     mp3_data.seek(0)
 
-    audio = MP3(mp3_data, ID3=mt_id3.ID3)
-    audio.add_tags()
-    audio["TIT2"] = mt_id3.TIT2(encoding=3, text="Test Song")
-    audio["TPE1"] = mt_id3.TPE1(encoding=3, text="Test Artist")
-    audio.save(mp3_data)
-
-    return mp3_data
+    return mp3_data.read()
