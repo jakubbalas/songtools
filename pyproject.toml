@@ -12,12 +12,9 @@ dependencies = [
     "pytest>=8.3.3",
     "mutagen>=1.47.0",
     "colorama>=0.4.6",
+    "unidecode>=1.3.8",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-
-[tool.pytest.ini_options]
-addopts = "-rP"
