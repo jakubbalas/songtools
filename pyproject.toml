@@ -11,6 +11,7 @@ dependencies = [
     "loguru>=0.7.2",
     "pytest>=8.3.3",
     "mutagen>=1.47.0",
+    "colorama>=0.4.6",
 ]
 
 [build-system]

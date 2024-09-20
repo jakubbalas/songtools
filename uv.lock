@@ -213,6 +213,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
+    { name = "colorama" },
     { name = "loguru" },
     { name = "mutagen" },
     { name = "pre-commit" },
@@ -223,8 +224,9 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=8.1.7" },
+    { name = "colorama" },
     { name = "loguru", specifier = ">=0.7.2" },
-    { name = "mutagen" },
+    { name = "mutagen", specifier = ">=1.47.0" },
     { name = "pre-commit", specifier = ">=3.8.0" },
     { name = "pytest", specifier = ">=8.3.3" },
     { name = "ruff", specifier = ">=0.6.5" },
