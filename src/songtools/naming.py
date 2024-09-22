@@ -2,21 +2,19 @@ import re
 from functools import reduce
 from unidecode import unidecode
 
-from songtools.song_file_types import SongFile
 
-
-def build_correct_song_name(song: SongFile) -> str:
+def build_correct_song_name(artists: list[str], title: str) -> str:
     """Get the filename from the metadata of the file.
     If the file has no metadata, return the styled filename.
 
-    :param SongFile song: SongFile object containing metadata.
+    :param list[str] artists: List of artists as mentioned in metadata.
+    :param str title: Title of the song from metadata.
 
     :rtype: str
     :return: Valid filename that can be used.
     """
-    return basic_music_file_style(
-        ", ".join(song.get_artists()) + " - " + song.get_title()
-    )
+
+    return basic_music_file_style(", ".join(artists) + " - " + title)
 
 
 def multi_space_removal(name: str) -> str:

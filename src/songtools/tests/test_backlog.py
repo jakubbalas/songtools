@@ -62,5 +62,5 @@ def test_remove_files_with_cyrillic(test_folder):
 def test_expected_folder_structure_after_cleanup(test_folder):
     tst_folder = _prepare_dirty_backlog_folder(test_folder)
     clean_preimport_folder(tst_folder)
-    items = [f for f in test_folder.glob("*")]
-    assert len(items) == 0
+    items = [f for f in test_folder.rglob("*")]
+    assert len(items) == 2

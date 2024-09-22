@@ -15,7 +15,7 @@ def rename_songs_from_metadata(root_path: Path) -> None:
             continue
 
         song = get_song_file(f)
-        new_name = build_correct_song_name(song)
+        new_name = build_correct_song_name(song.get_artists(), song.get_title())
         if new_name.lower() != f.stem.lower():  # Some filesystems don't like casing
             f.rename(f.with_name(new_name))
 
@@ -76,6 +76,6 @@ def clean_preimport_folder(backlog_folder: Path) -> None:
     :param Path backlog_folder: Root path to the backlog folder
     """
     remove_irrelevant_files(backlog_folder)
-    rename_songs_from_metadata(backlog_folder)
     remove_files_with_cyrilic(backlog_folder)
+    rename_songs_from_metadata(backlog_folder)
     remove_empty_folders(backlog_folder)
