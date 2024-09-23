@@ -1,4 +1,6 @@
 import re
+import string
+
 from functools import reduce
 from unidecode import unidecode
 
@@ -60,11 +62,7 @@ def basic_music_file_style(name: str) -> str:
     :param name: artist or song name (works also for whole filename)
     :return: prettified name useful for file naming
     """
-    styles = [
-        unidecode,
-        remove_special_characters,
-        multi_space_removal,
-    ]
+    styles = [unidecode, remove_special_characters, multi_space_removal, capitalize]
     return reduce(lambda acc, func: func(acc), styles, name)
 
 
@@ -75,3 +73,21 @@ def has_cyrillic(text: str):
     :return:
     """
     return bool(re.search("[\u0400-\u04ff]", text))
+
+
+def capitalize(name: str) -> str:
+    """
+    :param name: name to capitalize
+    :return: correctly capitalized name
+    """
+    name = string.capwords(name)
+    replacements = {
+        " And ": " and ",
+        " At ": " at ",
+        " Of ": " of ",
+        " The ": " the ",
+        " Is ": " is ",
+    }
+    for k, v in replacements.items():
+        name = name.replace(k, v)
+    return name
