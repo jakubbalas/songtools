@@ -9,8 +9,8 @@ def test_has_cyrillic():
 
 
 def test_remove_special_characters():
-    text = "Hi?my:name.is\x19a\x01big|j*dp>and<this/is\\my_crib.."
+    text = "Hi?my:name.is\x19a\x01big|j( * )dp>and<this/is\\my_crib.."
     assert (
-        "Hi my name is a big jxdp and this is my crib  "
+        "Hi my name is a big j(x)dp and this is my crib  "
         == remove_special_characters(text)
     )
