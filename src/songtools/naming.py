@@ -15,6 +15,7 @@ def build_correct_song_name(artists: list[str], title: str) -> str:
     """
     artists = [basic_music_file_style(artist) for artist in artists]
     title = basic_music_file_style(title)
+    title = remove_original_mix(title)
     return ", ".join(artists) + " - " + title
 
 
@@ -43,8 +44,7 @@ def remove_special_characters(name: str) -> str:
 
 
 def remove_original_mix(name: str) -> str:
-    name = re.sub(r"\(\s*original\s*\)", "", name, flags=re.IGNORECASE)
-    return re.sub(r"\(\s*original mix\s*\)", "", name, flags=re.IGNORECASE)
+    return re.sub(r"\(\s*original( mix)?\s*\)", "", name, flags=re.IGNORECASE).strip()
 
 
 def basic_music_file_style(name: str) -> str:
@@ -52,7 +52,6 @@ def basic_music_file_style(name: str) -> str:
         unidecode,
         remove_special_characters,
         multi_space_removal,
-        remove_original_mix,
     ]
     return reduce(lambda acc, func: func(acc), styles, name)
 

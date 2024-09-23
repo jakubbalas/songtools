@@ -1,7 +1,10 @@
+import pytest
+
 from songtools.naming import (
     has_cyrillic,
     remove_special_characters,
     multi_space_removal,
+    remove_original_mix,
 )
 
 
@@ -23,3 +26,18 @@ def test_remove_special_characters():
 def test_multi_space_removal():
     text = "What do  you    think about too many    spaces?"
     assert "What do you think about too many spaces?" == multi_space_removal(text)
+
+
+@pytest.mark.parametrize(
+    "test_in,test_out",
+    [
+        ("test me (some mix)", "test me (some mix)"),
+        ("original mix", "original mix"),
+        ("test (original mix)", "test"),
+        ("original mix (OriginAl MiX)", "original mix"),
+        ("original mix (OriginAl MiXalot)", "original mix (OriginAl MiXalot)"),
+        ("some song (original)", "some song"),
+    ],
+)
+def test_remove_original_mix_from_title(test_in, test_out):
+    assert remove_original_mix(test_in) == test_out
