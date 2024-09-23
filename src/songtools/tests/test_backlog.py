@@ -31,6 +31,9 @@ def _prepare_dirty_backlog_folder(root_folder: Path) -> Path:
     data = create_test_mp3_data(mf)
     cyrillic_in_meta_file.write_bytes(data)
 
+    case_rename = mixed_folder / "JoUch - Freeze.mp3"
+    case_rename.touch()
+
     return root_folder
 
 
@@ -56,11 +59,19 @@ def test_remove_irrelevant_files(test_folder):
 def test_remove_files_with_cyrillic(test_folder):
     tst_folder = _prepare_dirty_backlog_folder(test_folder)
     clean_preimport_folder(tst_folder)
-    assert tst_folder / "mixed_folder/cyrillic_file_тест.mp3"
+    assert not (tst_folder / "mixed_folder/cyrillic_file_тест.mp3").exists()
+
+
+def test_renaming_casing_only_works(test_folder):
+    tst_folder = _prepare_dirty_backlog_folder(test_folder)
+    clean_preimport_folder(tst_folder)
+    items = [f for f in test_folder.rglob("*")]
+    print(items)
+    assert (tst_folder / "mixed_folder/Jouch - Freeze.mp3").exists()
 
 
 def test_expected_folder_structure_after_cleanup(test_folder):
     tst_folder = _prepare_dirty_backlog_folder(test_folder)
     clean_preimport_folder(tst_folder)
     items = [f for f in test_folder.rglob("*")]
-    assert len(items) == 2
+    assert len(items) == 3
