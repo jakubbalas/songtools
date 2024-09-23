@@ -6,6 +6,9 @@ from songtools.naming import (
     multi_space_removal,
     remove_original_mix,
     basic_music_file_style,
+    capitalize,
+    extract_featuring_artists,
+    build_correct_song_file_name,
 )
 
 
@@ -47,9 +50,47 @@ def test_remove_original_mix_from_title(test_in, test_out):
 @pytest.mark.parametrize(
     "test_in,test_out",
     [
-        ("Γεια σας κόσμε", "Geia sas kosme"),
-        ("Ahoj * světe", "Ahoj x svete"),
+        ("Γεια σας κόσμε", "Geia Sas Kosme"),
+        ("Ahoj * světe", "Ahoj X Svete"),
     ],
 )
 def test_basic_styling(test_in, test_out):
     assert basic_music_file_style(test_in) == test_out
+
+
+@pytest.mark.parametrize(
+    "test_in,test_out",
+    [
+        ("world's LAZIEST crowd", "World's Laziest Crowd"),
+        ("JJ AND Lulu", "Jj and Lulu"),
+        ("AND what IS this ?", "And What is This ?"),
+        ("Sentence Of The Day At home", "Sentence of the Day at Home"),
+    ],
+)
+def test_capitalizing(test_in, test_out):
+    assert capitalize(test_in) == test_out
+
+
+@pytest.mark.parametrize(
+    "test_in,test_out",
+    [
+        ("smalls (ft. madonna)", ("smalls", ["madonna"])),
+        ("rivers (feat JDP)", ("rivers", ["JDP"])),
+        ("rivers feat. JDP", ("rivers", ["JDP"])),
+    ],
+)
+def test_featuring_extraction(test_in, test_out):
+    assert extract_featuring_artists(test_in) == test_out
+
+
+@pytest.mark.parametrize(
+    "test_artists,test_title,test_out",
+    [
+        (["JDP", "JakeDaPhunk"], "frequencies", "Jakedaphunk, Jdp - Frequencies"),
+        (["JDP feat. JakeDaPhunk"], "frequencies", "Jakedaphunk, Jdp - Frequencies"),
+        (["JDP "], "frequencies feat. JakeDaphunk", "Jakedaphunk, Jdp - Frequencies"),
+        (["JDP", "Jake"], "frequencies feat. Jake", "Jake, Jdp - Frequencies"),
+    ],
+)
+def test_build_correct_song_file_name(test_artists, test_title, test_out):
+    assert build_correct_song_file_name(test_artists, test_title) == test_out

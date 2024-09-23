@@ -1,7 +1,8 @@
 from pathlib import Path
 
-from songtools.naming import has_cyrillic, build_correct_song_name
+from songtools.naming import has_cyrillic, build_correct_song_file_name
 from songtools.song_file_types import get_song_file
+from random import randint
 
 IRRELEVANT_SUFFIXES = [".jpg", ".png", ".m3u", ".nfo", ".cue", ".txt"]
 SUPPORTED_MUSIC_TYPES = [
@@ -10,14 +11,24 @@ SUPPORTED_MUSIC_TYPES = [
 
 
 def rename_songs_from_metadata(root_path: Path) -> None:
+    """
+    Get artists and title from metadata and style it so it can be used
+    to rename files.
+    :param root_path:
+    :return:
+    """
     for f in root_path.rglob("*"):
         if f.is_dir() or f.suffix not in SUPPORTED_MUSIC_TYPES:
             continue
 
         song = get_song_file(f)
-        new_name = build_correct_song_name(song.get_artists(), song.get_title())
+        new_name = build_correct_song_file_name(song.get_artists(), song.get_title())
         if new_name.lower() != f.stem.lower():  # Some filesystems don't like casing
-            f.rename(f.with_name(new_name))
+            f.rename(f.with_stem(new_name))
+        elif new_name != f.stem:
+            temp_name = new_name + str(randint(10000000, 99999999))
+            f = f.rename(f.with_stem(temp_name))
+            f.rename(f.with_stem(new_name))
 
 
 def remove_empty_folders(root_path: Path) -> None:

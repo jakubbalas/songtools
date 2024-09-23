@@ -1,21 +1,56 @@
 import re
+import string
+
 from functools import reduce
 from unidecode import unidecode
 
 
-def build_correct_song_name(artists: list[str], title: str) -> str:
+def build_correct_song_file_name(artists: list[str], orig_title: str) -> str:
     """Get the filename from the metadata of the file.
     If the file has no metadata, return the styled filename.
 
     :param list[str] artists: List of artists as mentioned in metadata.
-    :param str title: Title of the song from metadata.
+    :param str orig_title: Title of the song from metadata.
 
     :return: Valid filename that can be used.
     """
-    artists = [basic_music_file_style(artist) for artist in artists]
+    orig_title = basic_music_file_style(orig_title)
+    title = handle_title(orig_title)
+    artists = [basic_music_file_style(a) for a in artists]
+    artists = handle_artists(artists, orig_title)
+
+    return ", ".join(artists) + " - " + title
+
+
+def handle_title(title: str) -> str:
+    """
+    :param str title: Title of the song.
+    :return: Correctly formatted title.
+    """
     title = basic_music_file_style(title)
     title = remove_original_mix(title)
-    return ", ".join(artists) + " - " + title
+    title, _ = extract_featuring_artists(title)
+    return title
+
+
+def handle_artists(artists: list[str], title: str) -> list[str]:
+    """Handle artists that are in the metadata.
+
+    :param list[str] artists: List of artists from metadata.
+    :param str title: original title that can contain feat artists.
+    :return: List of artists that are correctly formatted.
+    """
+    all_artists = []
+    for a in artists:
+        artist, featuring = extract_featuring_artists(a)
+        all_artists.append(artist)
+        all_artists += featuring
+
+    _, title_artists = extract_featuring_artists(title)
+    title_artists = [basic_music_file_style(a) for a in title_artists]
+    all_artists += title_artists
+    all_artists = [basic_music_file_style(a) for a in all_artists]
+    return sorted(set(all_artists))
 
 
 def multi_space_removal(name: str) -> str:
@@ -52,7 +87,7 @@ def remove_original_mix(name: str) -> str:
     :return: string with removed original mix suffix.
     """
 
-    return re.sub(r"\(\s*original( mix)?\s*\)", "", name, flags=re.IGNORECASE).strip()
+    return re.sub(r"\(\s*original( mix)?\s*\)", "", name, flags=re.I).strip()
 
 
 def basic_music_file_style(name: str) -> str:
@@ -60,11 +95,7 @@ def basic_music_file_style(name: str) -> str:
     :param name: artist or song name (works also for whole filename)
     :return: prettified name useful for file naming
     """
-    styles = [
-        unidecode,
-        remove_special_characters,
-        multi_space_removal,
-    ]
+    styles = [unidecode, remove_special_characters, multi_space_removal, capitalize]
     return reduce(lambda acc, func: func(acc), styles, name)
 
 
@@ -75,3 +106,42 @@ def has_cyrillic(text: str):
     :return:
     """
     return bool(re.search("[\u0400-\u04ff]", text))
+
+
+def capitalize(name: str) -> str:
+    """
+    :param name: name to capitalize
+    :return: correctly capitalized name
+    """
+    name = string.capwords(name)
+    replacements = {
+        " And ": " and ",
+        " At ": " at ",
+        " Of ": " of ",
+        " The ": " the ",
+        " Is ": " is ",
+    }
+    for k, v in replacements.items():
+        name = name.replace(k, v)
+    return name
+
+
+def extract_featuring_artists(title) -> (str, list[str]):
+    """Takes title and extracts featuring artists from it.
+
+    :param title: original title
+    :return: title without featuring artists and list of featuring artists
+    """
+    artists = []
+    patterns = [
+        (r"(Feat(\.?)|ft\.|featuring) (.*?) -", " -"),
+        (r"\((Feat(\.?)|ft\.) (.*?)\) ", ""),
+        (r" \(?\[?(Feat(\.?)|ft\.) (.*?)\)?\]?$", ""),
+    ]
+    for regex in patterns:
+        feats = re.search(regex[0], title, re.I)
+        if feats:
+            artists.append(re.search(regex[0], title, re.I).group(3))
+            title = title.replace(re.search(regex[0], title, re.I).group(0), regex[1])
+
+    return title, artists
