@@ -7,6 +7,8 @@ from songtools.naming import (
     remove_original_mix,
     basic_music_file_style,
     capitalize,
+    extract_featuring_artists,
+    build_correct_song_file_name,
 )
 
 
@@ -67,3 +69,28 @@ def test_basic_styling(test_in, test_out):
 )
 def test_capitalizing(test_in, test_out):
     assert capitalize(test_in) == test_out
+
+
+@pytest.mark.parametrize(
+    "test_in,test_out",
+    [
+        ("smalls (ft. madonna)", ("smalls", ["madonna"])),
+        ("rivers (feat JDP)", ("rivers", ["JDP"])),
+        ("rivers feat. JDP", ("rivers", ["JDP"])),
+    ],
+)
+def test_featuring_extraction(test_in, test_out):
+    assert extract_featuring_artists(test_in) == test_out
+
+
+@pytest.mark.parametrize(
+    "test_artists,test_title,test_out",
+    [
+        (["JDP", "JakeDaPhunk"], "frequencies", "Jakedaphunk, Jdp - Frequencies"),
+        (["JDP feat. JakeDaPhunk"], "frequencies", "Jakedaphunk, Jdp - Frequencies"),
+        (["JDP "], "frequencies feat. JakeDaphunk", "Jakedaphunk, Jdp - Frequencies"),
+        (["JDP", "Jake"], "frequencies feat. Jake", "Jake, Jdp - Frequencies"),
+    ],
+)
+def test_build_correct_song_file_name(test_artists, test_title, test_out):
+    assert build_correct_song_file_name(test_artists, test_title) == test_out

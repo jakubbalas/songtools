@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from songtools.naming import has_cyrillic, build_correct_song_name
+from songtools.naming import has_cyrillic, build_correct_song_file_name
 from songtools.song_file_types import get_song_file
 
 IRRELEVANT_SUFFIXES = [".jpg", ".png", ".m3u", ".nfo", ".cue", ".txt"]
@@ -15,7 +15,7 @@ def rename_songs_from_metadata(root_path: Path) -> None:
             continue
 
         song = get_song_file(f)
-        new_name = build_correct_song_name(song.get_artists(), song.get_title())
+        new_name = build_correct_song_file_name(song.get_artists(), song.get_title())
         if new_name.lower() != f.stem.lower():  # Some filesystems don't like casing
             f.rename(f.with_name(new_name))
 
