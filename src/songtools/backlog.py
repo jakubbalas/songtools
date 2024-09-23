@@ -10,6 +10,12 @@ SUPPORTED_MUSIC_TYPES = [
 
 
 def rename_songs_from_metadata(root_path: Path) -> None:
+    """
+    Get artists and title from metadata and style it so it can be used
+    to rename files.
+    :param root_path:
+    :return:
+    """
     for f in root_path.rglob("*"):
         if f.is_dir() or f.suffix not in SUPPORTED_MUSIC_TYPES:
             continue
