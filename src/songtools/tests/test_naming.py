@@ -1,4 +1,8 @@
-from songtools.naming import has_cyrillic, remove_special_characters
+from songtools.naming import (
+    has_cyrillic,
+    remove_special_characters,
+    multi_space_removal,
+)
 
 
 def test_has_cyrillic():
@@ -14,3 +18,8 @@ def test_remove_special_characters():
         "Hi my name is a big j(x)dp and this is my crib  "
         == remove_special_characters(text)
     )
+
+
+def test_multi_space_removal():
+    text = "What do  you    think about too many    spaces?"
+    assert "What do you think about too many spaces?" == multi_space_removal(text)

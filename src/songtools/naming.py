@@ -13,8 +13,9 @@ def build_correct_song_name(artists: list[str], title: str) -> str:
     :rtype: str
     :return: Valid filename that can be used.
     """
-
-    return basic_music_file_style(", ".join(artists) + " - " + title)
+    artists = [basic_music_file_style(artist) for artist in artists]
+    title = basic_music_file_style(title)
+    return ", ".join(artists) + " - " + title
 
 
 def multi_space_removal(name: str) -> str:
