@@ -10,7 +10,6 @@ def build_correct_song_name(artists: list[str], title: str) -> str:
     :param list[str] artists: List of artists as mentioned in metadata.
     :param str title: Title of the song from metadata.
 
-    :rtype: str
     :return: Valid filename that can be used.
     """
     artists = [basic_music_file_style(artist) for artist in artists]
@@ -24,6 +23,11 @@ def multi_space_removal(name: str) -> str:
 
 
 def remove_special_characters(name: str) -> str:
+    """Replacing special characters that may cause issues with filesystems.
+
+    :param name:
+    :return: string with removed special characters.
+    """
     translations = str.maketrans(
         {
             "?": " ",
@@ -44,10 +48,18 @@ def remove_special_characters(name: str) -> str:
 
 
 def remove_original_mix(name: str) -> str:
+    """
+    :return: string with removed original mix suffix.
+    """
+
     return re.sub(r"\(\s*original( mix)?\s*\)", "", name, flags=re.IGNORECASE).strip()
 
 
 def basic_music_file_style(name: str) -> str:
+    """
+    :param name: artist or song name (works also for whole filename)
+    :return: prettified name useful for file naming
+    """
     styles = [
         unidecode,
         remove_special_characters,

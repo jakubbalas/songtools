@@ -5,6 +5,7 @@ from songtools.naming import (
     remove_special_characters,
     multi_space_removal,
     remove_original_mix,
+    basic_music_file_style,
 )
 
 
@@ -41,3 +42,14 @@ def test_multi_space_removal():
 )
 def test_remove_original_mix_from_title(test_in, test_out):
     assert remove_original_mix(test_in) == test_out
+
+
+@pytest.mark.parametrize(
+    "test_in,test_out",
+    [
+        ("Γεια σας κόσμε", "Geia sas kosme"),
+        ("Ahoj * světe", "Ahoj x svete"),
+    ],
+)
+def test_basic_styling(test_in, test_out):
+    assert basic_music_file_style(test_in) == test_out
