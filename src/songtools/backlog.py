@@ -6,10 +6,19 @@ from songtools.naming import has_cyrillic, build_correct_song_file_name
 from songtools.song_file_types import get_song_file, SongFile, UnableToExtractData
 from random import randint
 
-IRRELEVANT_SUFFIXES = [".jpg", ".png", ".m3u", ".nfo", ".cue", ".txt"]
-SUPPORTED_MUSIC_TYPES = [
-    ".mp3",
+IRRELEVANT_SUFFIXES = [
+    ".accurip",
+    ".bpm",
+    ".cue",
+    ".jpg",
+    ".log",
+    ".m3u",
+    ".nfo",
+    ".png",
+    ".txt",
+    ".url",
 ]
+SUPPORTED_MUSIC_TYPES = [".mp3", ".flac"]
 MUSIC_MIX_MIN_SECONDS = 1000
 
 
@@ -24,7 +33,7 @@ def handle_music_files(root_path: Path) -> None:
         if f.is_dir():
             continue
         elif f.suffix not in SUPPORTED_MUSIC_TYPES:
-            click.secho(f"Unsupported music file {f}", fg="yellow")
+            click.secho(f"Unsupported music file {f}", fg="yellow", bg="white")
             continue
         try:
             song = get_song_file(f)
@@ -33,7 +42,11 @@ def handle_music_files(root_path: Path) -> None:
             continue
         if remove_music_mixes(f, song):
             continue
-        rename_songs_from_metadata(f, song)
+        try:
+            rename_songs_from_metadata(f, song)
+        except OSError as e:
+            click.secho(f"Can't rename file {f}", fg="red")
+            click.secho(f"Error: {e}", fg="red")
 
 
 def rename_songs_from_metadata(song_path: Path, song: SongFile) -> None:
