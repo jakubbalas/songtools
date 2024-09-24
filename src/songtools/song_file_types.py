@@ -112,14 +112,13 @@ def get_song_file(file: Path) -> SongFile:
         raise FileNotFoundError(f"Song File {file} does not exist.")
     if file.suffix == ".mp3":
         return MP3File(file)
+    elif file.suffix == ".flac":
+        return FlacFile(file)
     else:
         raise UnsupportedSongType(f"Song File {file} is not supported.")
 
 
 class MP3File(SongFile):
-    def __init__(self, file: Path):
-        super().__init__(file)
-
     def _get_metadata_artists(self) -> str:
         """
         :rtype: str
@@ -138,3 +137,24 @@ class MP3File(SongFile):
         if not self.metadata or not self.metadata.tags:
             return ""
         return str(self.metadata.tags.get(tag, ""))
+
+
+class FlacFile(SongFile):
+    def _get_metadata_artists(self) -> str:
+        """
+        :rtype: str
+        :return: Song artists
+        """
+        return ", ".join(self._get_tag("artist"))
+
+    def _get_metadata_title(self) -> str:
+        """
+        :rtype: str
+        :return:
+        """
+        return ", ".join(self._get_tag("title"))
+
+    def _get_tag(self, tag: str) -> str:
+        if not self.metadata or not self.metadata.tags:
+            return ""
+        return self.metadata.tags.get(tag, "")

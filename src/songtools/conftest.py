@@ -75,6 +75,16 @@ def test_long_mp3_data(test_folder) -> bytes:
     return mp3_path.read_bytes()
 
 
+@pytest.fixture
+def flac_data(test_folder) -> bytes:
+    """
+    :param Path test_folder: Test folder path.
+    :return: empty FLAC file data.
+    """
+    flac_path = Path(__file__).parent / "tests/fixtures/silence20s.flac"
+    return flac_path.read_bytes()
+
+
 @dataclass
 class MetadataFields:
     title: str

@@ -1,11 +1,11 @@
 import pytest
-from songtools.conftest import create_test_mp3_data, MetadataFields
 from pathlib import Path
-
+from songtools.conftest import create_test_mp3_data, MetadataFields
 from songtools.song_file_types import (
     get_song_file,
     UnsupportedSongType,
     UnableToExtractData,
+    FlacFile,
 )
 
 
@@ -76,3 +76,12 @@ def test_duration_is_present_for_files_with_no_metadata(test_folder, test_mp3_da
 
     song = get_song_file(test_mp3_file)
     assert song.get_duration_seconds() == 17
+
+
+def test_flac_file_gets_metadata(test_folder: Path, flac_data):
+    test_flac_file = test_folder / "JdPouch - shouldwork.flac"
+    test_flac_file.write_bytes(flac_data)
+
+    song = get_song_file(test_flac_file)
+    assert type(song) is FlacFile
+    assert song.get_artists() == ["JdPouch"]
