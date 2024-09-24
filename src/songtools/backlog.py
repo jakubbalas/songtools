@@ -21,7 +21,10 @@ def handle_music_files(root_path: Path) -> None:
     :param Path root_path: Root path to the backlog folder
     """
     for f in root_path.rglob("*"):
-        if f.is_dir() or f.suffix not in SUPPORTED_MUSIC_TYPES:
+        if f.is_dir():
+            continue
+        elif f.suffix not in SUPPORTED_MUSIC_TYPES:
+            click.secho(f"Unsupported music file {f}", fg="yellow")
             continue
         try:
             song = get_song_file(f)
@@ -52,8 +55,6 @@ def rename_songs_from_metadata(song_path: Path, song: SongFile) -> None:
         temp_name = new_name + str(randint(10000000, 99999999))
         song_path = song_path.rename(song_path.with_stem(temp_name))
         song_path.rename(song_path.with_stem(new_name))
-    else:
-        click.secho(f"all coool: {new_name.lower()} :: {song_path}")
 
 
 def remove_empty_folders(root_path: Path) -> None:
