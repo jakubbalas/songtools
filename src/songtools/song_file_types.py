@@ -23,7 +23,6 @@ class SongFile(ABC):
             self.metadata = None
             self._check()
             click.secho(f"Could not read metadata from file {path}.", fg="yellow")
-            self.metadata = None
         self._check()
 
     def _check(self):
@@ -53,6 +52,13 @@ class SongFile(ABC):
         """
         :return: Duration of the song in seconds
         """
+        if not self.metadata:
+            click.secho(
+                "Can't determine duration of song without metadata.",
+                fg="yellow",
+                bg="red",
+            )
+            return 0
         return math.ceil(self.metadata.info.length)
 
     def get_title(self) -> str:
