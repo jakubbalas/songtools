@@ -114,6 +114,7 @@ def capitalize(name: str) -> str:
     :return: correctly capitalized name
     """
     name = string.capwords(name)
+
     replacements = {
         " And ": " and ",
         " At ": " at ",
@@ -123,6 +124,14 @@ def capitalize(name: str) -> str:
     }
     for k, v in replacements.items():
         name = name.replace(k, v)
+
+    # Capitalize first character after characters: (,"
+    name = re.sub(
+        r'[\(,"]\s*([a-z])',
+        lambda match: f"{match.group(0)[0]}{match.group(1).upper()}",
+        name,
+    )
+
     return name
 
 

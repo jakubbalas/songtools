@@ -42,12 +42,18 @@ def rename_songs_from_metadata(song_path: Path, song: SongFile) -> None:
     :param song: Implementation of a song file object from metadata
     """
     new_name = build_correct_song_file_name(song.get_artists(), song.get_title())
-    if new_name.lower() != song_path.stem.lower():  # Some filesystems don't like casing
+    # Note: some filesystems don't like if I only change file casing
+    #       - that's why I have to make a tmp name first
+    if new_name.lower() != song_path.stem.lower():
+        click.secho(f"Renaming {song_path} to {new_name}", fg="green")
         song_path.rename(song_path.with_stem(new_name))
     elif new_name != song_path.stem:
+        click.secho(f"Fixing song casing {song_path} to {new_name}", fg="green")
         temp_name = new_name + str(randint(10000000, 99999999))
         song_path = song_path.rename(song_path.with_stem(temp_name))
         song_path.rename(song_path.with_stem(new_name))
+    else:
+        click.secho(f"all coool: {new_name.lower()} :: {song_path}")
 
 
 def remove_empty_folders(root_path: Path) -> None:
@@ -78,9 +84,10 @@ def remove_irrelevant_files(root_path: Path) -> None:
 
     :param Path root_path: Root path to the backlog folder
     """
-    for folder in root_path.rglob("*"):
-        if folder.is_file() and folder.suffix in IRRELEVANT_SUFFIXES:
-            folder.unlink()
+    for f in root_path.rglob("*"):
+        if f.is_file() and f.suffix in IRRELEVANT_SUFFIXES:
+            click.secho(f"Removing irrelevant file {f}", fg="yellow")
+            f.unlink()
 
 
 def remove_files_with_cyrilic(root_path: Path) -> None:
@@ -91,6 +98,7 @@ def remove_files_with_cyrilic(root_path: Path) -> None:
     """
     for f in root_path.rglob("*"):
         if f.is_file() and has_cyrillic(f.name):
+            click.secho(f"Removing cyrillic file {f}", fg="yellow")
             f.unlink()
 
 
@@ -104,6 +112,7 @@ def remove_music_mixes(song_path: Path, song: SongFile) -> bool:
     :return: True if the dj mix was removed, False otherwise
     """
     if song.get_duration_seconds() > MUSIC_MIX_MIN_SECONDS:
+        click.secho(f"Removing DJ mix {song_path}", fg="yellow")
         song_path.unlink()
         return True
     else:
@@ -121,6 +130,9 @@ def clean_preimport_folder(backlog_folder: Path) -> None:
 
     :param Path backlog_folder: Root path to the backlog folder
     """
+    if not backlog_folder.exists():
+        click.secho(f"Folder {backlog_folder} does not exist", fg="red")
+        return
     remove_irrelevant_files(backlog_folder)
     remove_files_with_cyrilic(backlog_folder)
     handle_music_files(backlog_folder)

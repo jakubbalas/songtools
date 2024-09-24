@@ -1,4 +1,6 @@
 import click
+from pathlib import Path
+from songtools.backlog import clean_preimport_folder
 
 
 @click.group()
@@ -18,9 +20,10 @@ def load_songs():
 
 
 @backlog.command()
-def clean_folder():
-    # TODO: implement
+@click.argument("folder_path")
+def clean_folder(folder_path):
     click.echo("Cleaning songs")
+    clean_preimport_folder(Path(folder_path))
 
 
 if __name__ == "__main__":
