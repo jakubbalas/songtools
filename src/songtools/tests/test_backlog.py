@@ -32,7 +32,8 @@ def _prepare_dirty_backlog_folder(root_folder: Path) -> Path:
     cyrillic_in_meta_file.write_bytes(data)
 
     case_rename = mixed_folder / "JoUch - Freeze.mp3"
-    case_rename.touch()
+    data = create_test_mp3_data(metadata=False)
+    case_rename.write_bytes(data)
 
     return root_folder
 
@@ -75,3 +76,10 @@ def test_expected_folder_structure_after_cleanup(test_folder):
     clean_preimport_folder(tst_folder)
     items = [f for f in test_folder.rglob("*")]
     assert len(items) == 3
+
+
+def test_dj_mixes_are_removed(test_folder, test_long_mp3_data):
+    dj_mix = test_folder / "dj - mix.mp3"
+    dj_mix.write_bytes(test_long_mp3_data)
+    clean_preimport_folder(test_folder)
+    assert not dj_mix.exists()

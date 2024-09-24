@@ -1,5 +1,6 @@
 import click
 import mutagen
+import math
 
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -19,27 +20,56 @@ class SongFile(ABC):
         try:
             self.metadata = mutagen.File(path)
         except mutagen.MutagenError:
-            if path.stem.count("-") != 1:
-                raise UnableToExtractData()
+            self.metadata = None
+            self._check()
             click.secho(f"Could not read metadata from file {path}.", fg="yellow")
             self.metadata = None
+        self._check()
+
+    def _check(self):
+        if self.path.stem.count("-") != 1 and not (
+            self._get_metadata_title() and self._get_metadata_artists()
+        ):
+            raise UnableToExtractData(
+                f"Unable to extract data from metadata or filename: {self.path}."
+            )
 
     def get_artists(self) -> list[str]:
         """Retrieve artists from metadata, or filename if metadata is not present.
 
         :return: List of all artists collaborating on a song.
         """
-        artists = self.get_metadata_artists()
+        artists = self._get_metadata_artists()
         if not artists:
             click.secho(
                 f"No artist metadata for song {self.path}, using file name.",
                 fg="yellow",
             )
-            artists = self.get_artists_from_filename()
+            artists = self._get_artists_from_filename()
 
         return [a.strip() for a in artists.split(", ")]
 
-    def get_artists_from_filename(self) -> str:
+    def get_duration_seconds(self) -> int:
+        """
+        :return: Duration of the song in seconds
+        """
+        return math.ceil(self.metadata.info.length)
+
+    def get_title(self) -> str:
+        """
+        :rtype: str
+        :return: Song title
+        """
+        title = self._get_metadata_title()
+        if not title:
+            click.secho(
+                f"No title metadata for song {self.path}, using file name.", fg="yellow"
+            )
+            title = self._get_title_from_filename()
+
+        return title.strip()
+
+    def _get_artists_from_filename(self) -> str:
         """Fallback method to extract artists from filename.
 
         :rtype: list[str]
@@ -48,28 +78,14 @@ class SongFile(ABC):
         return self.path.stem.split("-")[0]
 
     @abstractmethod
-    def get_metadata_artists(self) -> list[str]:
+    def _get_metadata_artists(self) -> list[str]:
         """
         :rtype: list[str]
         :return: List of artists collaborating on a song.
         """
         pass
 
-    def get_title(self) -> str:
-        """
-        :rtype: str
-        :return: Song title
-        """
-        title = self.get_metadata_title()
-        if not title:
-            click.secho(
-                f"No title metadata for song {self.path}, using file name.", fg="yellow"
-            )
-            title = self.get_title_from_filename()
-
-        return title.strip()
-
-    def get_title_from_filename(self) -> str:
+    def _get_title_from_filename(self) -> str:
         """Fallback method to extract title from filename.
 
         :rtype: str
@@ -78,7 +94,7 @@ class SongFile(ABC):
         return self.path.stem.split("-")[1]
 
     @abstractmethod
-    def get_metadata_title(self) -> str:
+    def _get_metadata_title(self) -> str:
         """
         :rtype: str
         :return: Extracted title of a song.
@@ -104,14 +120,14 @@ class MP3File(SongFile):
     def __init__(self, file: Path):
         super().__init__(file)
 
-    def get_metadata_artists(self) -> str:
+    def _get_metadata_artists(self) -> str:
         """
         :rtype: str
         :return: Song artists
         """
         return self._get_tag("TPE1")
 
-    def get_metadata_title(self) -> str:
+    def _get_metadata_title(self) -> str:
         """
         :rtype: str
         :return:

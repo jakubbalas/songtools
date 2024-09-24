@@ -90,6 +90,8 @@ def test_featuring_extraction(test_in, test_out):
         (["JDP feat. JakeDaPhunk"], "frequencies", "Jakedaphunk, Jdp - Frequencies"),
         (["JDP "], "frequencies feat. JakeDaphunk", "Jakedaphunk, Jdp - Frequencies"),
         (["JDP", "Jake"], "frequencies feat. Jake", "Jake, Jdp - Frequencies"),
+        (["JDP"], "frequencies (jake remix)", "Jdp - Frequencies (Jake Remix)"),
+        (["JDP"], 'frequencies ("jake" remix)', 'Jdp - Frequencies ("Jake" Remix)'),
     ],
 )
 def test_build_correct_song_file_name(test_artists, test_title, test_out):
