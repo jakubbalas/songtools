@@ -1,34 +1,53 @@
 from pathlib import Path
 
+import click
+
 from songtools.naming import has_cyrillic, build_correct_song_file_name
-from songtools.song_file_types import get_song_file
+from songtools.song_file_types import get_song_file, SongFile, UnableToExtractData
 from random import randint
 
 IRRELEVANT_SUFFIXES = [".jpg", ".png", ".m3u", ".nfo", ".cue", ".txt"]
 SUPPORTED_MUSIC_TYPES = [
     ".mp3",
 ]
+MUSIC_MIX_MIN_SECONDS = 1000
 
 
-def rename_songs_from_metadata(root_path: Path) -> None:
-    """
-    Get artists and title from metadata and style it so it can be used
-    to rename files.
-    :param root_path:
-    :return:
+def handle_music_files(root_path: Path) -> None:
+    """Bundle of all functionality that has to be done on a file
+    It is a bit more expensive to load the metadata so in here load it once and
+    then do all required operations.
+
+    :param Path root_path: Root path to the backlog folder
     """
     for f in root_path.rglob("*"):
         if f.is_dir() or f.suffix not in SUPPORTED_MUSIC_TYPES:
             continue
+        try:
+            song = get_song_file(f)
+        except UnableToExtractData:
+            click.secho(f"Can't extract metadata from file {f}", fg="red")
+            continue
+        if remove_music_mixes(f, song):
+            continue
+        rename_songs_from_metadata(f, song)
 
-        song = get_song_file(f)
-        new_name = build_correct_song_file_name(song.get_artists(), song.get_title())
-        if new_name.lower() != f.stem.lower():  # Some filesystems don't like casing
-            f.rename(f.with_stem(new_name))
-        elif new_name != f.stem:
-            temp_name = new_name + str(randint(10000000, 99999999))
-            f = f.rename(f.with_stem(temp_name))
-            f.rename(f.with_stem(new_name))
+
+def rename_songs_from_metadata(song_path: Path, song: SongFile) -> None:
+    """
+    Get artists and title from metadata and style it so it can be used
+    to rename files.
+
+    :param song_path: Path to the song file
+    :param song: Implementation of a song file object from metadata
+    """
+    new_name = build_correct_song_file_name(song.get_artists(), song.get_title())
+    if new_name.lower() != song_path.stem.lower():  # Some filesystems don't like casing
+        song_path.rename(song_path.with_stem(new_name))
+    elif new_name != song_path.stem:
+        temp_name = new_name + str(randint(10000000, 99999999))
+        song_path = song_path.rename(song_path.with_stem(temp_name))
+        song_path.rename(song_path.with_stem(new_name))
 
 
 def remove_empty_folders(root_path: Path) -> None:
@@ -75,6 +94,22 @@ def remove_files_with_cyrilic(root_path: Path) -> None:
             f.unlink()
 
 
+def remove_music_mixes(song_path: Path, song: SongFile) -> bool:
+    """Remove all music mixes from the backlog folder.
+    It removes all files that are shorter than MUSIC_MIX_MIN_SECONDS.
+
+    :param Path song_path: Root path to the backlog folder
+    :param SongFile song: Implementation of a song file object from metadata
+
+    :return: True if the dj mix was removed, False otherwise
+    """
+    if song.get_duration_seconds() > MUSIC_MIX_MIN_SECONDS:
+        song_path.unlink()
+        return True
+    else:
+        return False
+
+
 def clean_preimport_folder(backlog_folder: Path) -> None:
     """Take the backlog folder and clean it.
     It will:
@@ -88,5 +123,5 @@ def clean_preimport_folder(backlog_folder: Path) -> None:
     """
     remove_irrelevant_files(backlog_folder)
     remove_files_with_cyrilic(backlog_folder)
-    rename_songs_from_metadata(backlog_folder)
+    handle_music_files(backlog_folder)
     remove_empty_folders(backlog_folder)

@@ -69,15 +69,19 @@ def test_mp3_data(test_folder) -> bytes:
     return mp3_path.read_bytes()
 
 
+@pytest.fixture
+def test_long_mp3_data(test_folder) -> bytes:
+    mp3_path = Path(__file__).parent / "tests/fixtures/silence15min.mp3"
+    return mp3_path.read_bytes()
+
+
 @dataclass
 class MetadataFields:
     title: str
     artist: str
 
 
-def create_test_mp3_data(
-    metadata: MetadataFields | bool | None = None, duration: int = 1
-) -> bytes:
+def create_test_mp3_data(metadata: MetadataFields | bool | None = None) -> bytes:
     """Create an empty MP3 file with some basic ID3 tags.
 
     :rtype: io.BytesIO
@@ -95,7 +99,6 @@ def create_test_mp3_data(
         b"\xa5\xa5\xa5\xa5\xa5\xa5\xae\xae\xae\xae\xae\xb6\xb6\xb6\xb6\xb6\xb6\xbe\xbe\xbe\xbe\xbe"
         b"\xf7\xf7\xf7\xf7\xf7\xf7\xff\xff\xff\xff\xff\x00\x00\x00PLAME3.100\x04\xb9"
         b"\x00\x00\x00\x00\x00\x00\x00\x005 $\x06qM"
-        b"\x00" * (128 * duration)  # Simulate empty MP3 file
     )
 
     if metadata is True:
@@ -113,5 +116,4 @@ def create_test_mp3_data(
         audio["TPE1"] = mt_id3.TPE1(encoding=3, text=metadata.artist)
         audio.save(mp3_data)
     mp3_data.seek(0)
-
     return mp3_data.read()

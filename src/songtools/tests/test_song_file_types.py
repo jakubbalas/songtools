@@ -21,7 +21,7 @@ def test_unsupported_song_file_raises_error(test_folder: Path):
         get_song_file(unsupported_file)
 
 
-def test_mp3_without_data_raises_exceptio(test_folder: Path):
+def test_mp3_without_data_raises_exception(test_folder: Path):
     mp3_file = test_folder / "test_no_dash.mp3"
     mp3_file.touch()
 
@@ -68,3 +68,11 @@ def test_mp3_gets_artists_and_title_from_filename_if_metadata_not_present(
     song = get_song_file(test_mp3_file)
     assert song.get_artists() == ["chimera", "jdp"]
     assert song.get_title() == "get it"
+
+
+def test_duration_is_present_for_files_with_no_metadata(test_folder, test_mp3_data):
+    test_mp3_file = test_folder / "chimera, jdp - get it.mp3"
+    test_mp3_file.write_bytes(test_mp3_data)
+
+    song = get_song_file(test_mp3_file)
+    assert song.get_duration_seconds() == 17
