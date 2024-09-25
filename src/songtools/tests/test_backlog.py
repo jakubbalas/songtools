@@ -14,6 +14,12 @@ def _prepare_dirty_backlog_folder(root_folder: Path) -> Path:
     empty_folder_a.mkdir(exist_ok=True)
     empty_folder_a2 = empty_folder_a / "empty_folder_a2"
     empty_folder_a2.mkdir(exist_ok=True)
+
+    metadata_only_folder = root_folder / "metadata_only_folder"
+    metadata_only_folder.mkdir(exist_ok=True)
+    metadata_file = metadata_only_folder / ".DS_Store"
+    metadata_file.touch()
+
     folder_with_rubbish = empty_folder_a / "folder_with_rubbish"
     folder_with_rubbish.mkdir(exist_ok=True)
 
@@ -43,6 +49,12 @@ def test_remove_empty_dirs(test_folder: Path):
     clean_preimport_folder(tst_folder)
     assert not (tst_folder / "empty_folder_a").exists()
     assert not (tst_folder / "folder_with_rubbish").exists()
+
+
+def test_remove_folders_with_metadata_only(test_folder):
+    tst_folder = _prepare_dirty_backlog_folder(test_folder)
+    clean_preimport_folder(tst_folder)
+    assert not (tst_folder / "metadata_only_folder").exists()
 
 
 def test_remove_irrelevant_files(test_folder):

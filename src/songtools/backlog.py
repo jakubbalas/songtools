@@ -20,6 +20,7 @@ IRRELEVANT_SUFFIXES = [
 ]
 SUPPORTED_MUSIC_TYPES = [".mp3", ".flac"]
 MUSIC_MIX_MIN_SECONDS = 1000
+META_FILES = [".DS_Store"]
 
 
 def handle_music_files(root_path: Path) -> None:
@@ -81,13 +82,23 @@ def remove_empty_folders(root_path: Path) -> None:
     max_nested = 100
     while empties_exists and nest < max_nested:
         empties_exists = False
-        for folder in sorted(
-            root_path.rglob("*"), key=lambda p: len(p.parts), reverse=True
-        ):
-            if folder.is_dir() and not any(folder.iterdir()):
-                folder.rmdir()
+        for f in root_path.rglob("*"):
+            if f.is_dir() and not any(f.iterdir()):
+                f.rmdir()
+                empties_exists = True
+            elif f.is_dir() and folder_contains_only_metadata(f):
+                for meta_item in f.iterdir():
+                    meta_item.unlink()
+                f.rmdir()
                 empties_exists = True
         nest += 1
+
+
+def folder_contains_only_metadata(folder: Path) -> bool:
+    for f in folder.iterdir():
+        if f.is_dir() or (f.is_file() and f.name not in META_FILES):
+            return False
+    return True
 
 
 def remove_irrelevant_files(root_path: Path) -> None:
@@ -151,3 +162,21 @@ def clean_preimport_folder(backlog_folder: Path) -> None:
     remove_files_with_cyrilic(backlog_folder)
     handle_music_files(backlog_folder)
     remove_empty_folders(backlog_folder)
+
+
+def load_backlog_folder_files(backlog_folder: Path) -> None:
+    """Load all songs from the backlog folder into the db
+    This makes it easier to search and filter songs based on metadata.
+    """
+    counter = 0
+    for f in backlog_folder.rglob("*"):
+        if f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES:
+            counter += 1
+        if counter % 10000 == 0:
+            click.secho(f"Loaded {counter} songs", fg="white")
+
+    click.secho(f"Loaded {counter} songs", fg="green")
+
+
+def load_backlog_folder_metadata() -> None:
+    """Load all metadata"""
