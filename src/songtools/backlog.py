@@ -20,6 +20,7 @@ IRRELEVANT_SUFFIXES = [
 ]
 SUPPORTED_MUSIC_TYPES = [".mp3", ".flac"]
 MUSIC_MIX_MIN_SECONDS = 1000
+META_FILES = [".DS_Store"]
 
 
 def handle_music_files(root_path: Path) -> None:
@@ -81,13 +82,23 @@ def remove_empty_folders(root_path: Path) -> None:
     max_nested = 100
     while empties_exists and nest < max_nested:
         empties_exists = False
-        for folder in sorted(
-            root_path.rglob("*"), key=lambda p: len(p.parts), reverse=True
-        ):
-            if folder.is_dir() and not any(folder.iterdir()):
-                folder.rmdir()
+        for f in root_path.rglob("*"):
+            if f.is_dir() and not any(f.iterdir()):
+                f.rmdir()
+                empties_exists = True
+            elif f.is_dir() and folder_contains_only_metadata(f):
+                for meta_item in f.iterdir():
+                    meta_item.unlink()
+                f.rmdir()
                 empties_exists = True
         nest += 1
+
+
+def folder_contains_only_metadata(folder: Path) -> bool:
+    for f in folder.iterdir():
+        if f.is_dir() or (f.is_file() and f.name not in META_FILES):
+            return False
+    return True
 
 
 def remove_irrelevant_files(root_path: Path) -> None:
