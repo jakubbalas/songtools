@@ -19,10 +19,11 @@ class SongFile(ABC):
         self.path = path
         try:
             self.metadata = mutagen.File(path)
-        except mutagen.MutagenError:
+        except mutagen.MutagenError as e:
             self.metadata = None
             self._check()
             click.secho(f"Could not read metadata from file {path}.", fg="yellow")
+            click.secho(e, fg="yellow", bg="white")
         self._check()
 
     def _check(self):
@@ -52,7 +53,7 @@ class SongFile(ABC):
         """
         :return: Duration of the song in seconds
         """
-        if not self.metadata:
+        if self.metadata is None:
             click.secho(
                 "Can't determine duration of song without metadata.",
                 fg="yellow",
