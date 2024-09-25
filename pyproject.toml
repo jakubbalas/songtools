@@ -13,6 +13,7 @@ dependencies = [
     "mutagen>=1.47.0",
     "colorama>=0.4.6",
     "unidecode>=1.3.8",
+    "sqlalchemy>=2.0.35",
 ]
 
 [build-system]
