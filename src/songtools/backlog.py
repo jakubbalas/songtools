@@ -162,3 +162,21 @@ def clean_preimport_folder(backlog_folder: Path) -> None:
     remove_files_with_cyrilic(backlog_folder)
     handle_music_files(backlog_folder)
     remove_empty_folders(backlog_folder)
+
+
+def load_backlog_folder_files(backlog_folder: Path) -> None:
+    """Load all songs from the backlog folder into the db
+    This makes it easier to search and filter songs based on metadata.
+    """
+    counter = 0
+    for f in backlog_folder.rglob("*"):
+        if f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES:
+            counter += 1
+        if counter % 10000 == 0:
+            click.secho(f"Loaded {counter} songs", fg="white")
+
+    click.secho(f"Loaded {counter} songs", fg="green")
+
+
+def load_backlog_folder_metadata() -> None:
+    """Load all metadata"""

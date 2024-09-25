@@ -8,4 +8,6 @@ Super simple user creation:
 CREATE USER <your user> WITH PASSWORD '<your password>';
 CREATE DATABASE songtools;
 GRANT ALL PRIVILEGES ON DATABASE songtools TO <your user>;
+\c songtools
+GRANT ALL ON SCHEMA public to songtools;
 ```
