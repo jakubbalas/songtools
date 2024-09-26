@@ -1,10 +1,13 @@
-from pathlib import Path
-
 import click
+from pathlib import Path
+from random import randint
+from sqlalchemy.orm import Session
+from sqlalchemy import Engine
+from songtools.db.models import BacklogSong
+from songtools import config
 
 from songtools.naming import has_cyrillic, build_correct_song_file_name
 from songtools.song_file_types import get_song_file, SongFile, UnableToExtractData
-from random import randint
 
 IRRELEVANT_SUFFIXES = [
     ".accurip",
@@ -164,17 +167,30 @@ def clean_preimport_folder(backlog_folder: Path) -> None:
     remove_empty_folders(backlog_folder)
 
 
-def load_backlog_folder_files(backlog_folder: Path) -> None:
+def load_backlog_folder_files(
+    backlog_folder: Path, db_engine: Engine, store_after: int = 10000
+) -> None:
     """Load all songs from the backlog folder into the db
     This makes it easier to search and filter songs based on metadata.
     """
-    counter = 0
+    counter = 1
+    songs = []
     for f in backlog_folder.rglob("*"):
         if f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES:
+            path = str(f.relative_to(config.backlog_path))
+            songs.append(BacklogSong(path=path))
             counter += 1
-        if counter % 10000 == 0:
+        if counter % store_after == 0:
+            with Session(db_engine) as session:
+                session.add_all(songs)
+                session.commit()
+                songs = []
             click.secho(f"Loaded {counter} songs", fg="white")
 
+    if songs:
+        with Session(db_engine) as session:
+            session.add_all(songs)
+            session.commit()
     click.secho(f"Loaded {counter} songs", fg="green")
 
 
