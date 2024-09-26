@@ -1,7 +1,13 @@
 from songtools.conftest import create_test_mp3_data, MetadataFields
 from pathlib import Path
-
-from songtools.backlog import clean_preimport_folder, IRRELEVANT_SUFFIXES
+from sqlalchemy.orm import sessionmaker
+from songtools.backlog import (
+    clean_preimport_folder,
+    IRRELEVANT_SUFFIXES,
+    load_backlog_folder_files,
+)
+from songtools.db.models import BacklogSong
+from songtools.db.session import get_in_memory_engine
 
 
 def _prepare_dirty_backlog_folder(root_folder: Path) -> Path:
@@ -95,3 +101,18 @@ def test_dj_mixes_are_removed(test_folder, test_long_mp3_data):
     dj_mix.write_bytes(test_long_mp3_data)
     clean_preimport_folder(test_folder)
     assert not dj_mix.exists()
+
+
+def test_songs_in_backlog_are_loaded_into_db(test_folder):
+    engine = get_in_memory_engine()
+    BacklogSong.metadata.create_all(engine)
+    num_entries = 44
+    for i in range(num_entries):
+        f = test_folder / f"song_{i}.mp3"
+        f.touch()
+    load_backlog_folder_files(test_folder, engine, store_after=9)
+
+    session = sessionmaker(bind=engine)
+    session = session()
+    songs = session.query(BacklogSong).count()
+    assert num_entries == songs
