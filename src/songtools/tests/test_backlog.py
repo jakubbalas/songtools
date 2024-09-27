@@ -5,6 +5,7 @@ from songtools.backlog import (
     clean_preimport_folder,
     IRRELEVANT_SUFFIXES,
     load_backlog_folder_files,
+    load_backlog_folder_metadata,
 )
 from songtools.db.models import BacklogSong
 from songtools.db.session import get_in_memory_engine
@@ -115,4 +116,23 @@ def test_songs_in_backlog_are_loaded_into_db(test_folder):
     session = sessionmaker(bind=engine)
     session = session()
     songs = session.query(BacklogSong).count()
-    assert num_entries == songs
+    assert songs == num_entries
+
+
+def test_songs_from_the_db_get_metadata_loaded(test_folder):
+    engine = get_in_memory_engine()
+    BacklogSong.metadata.create_all(engine)
+
+    song_1 = test_folder / "song_1.mp3"
+    mf = MetadataFields(title="Song uno", artist="JdPouch")
+    data = create_test_mp3_data(metadata=mf)
+    song_1.write_bytes(data)
+
+    load_backlog_folder_files(test_folder, engine, store_after=9)
+    load_backlog_folder_metadata()
+
+    session = sessionmaker(bind=engine)
+    session = session()
+    songs = session.query(BacklogSong).all()
+    assert len(songs) == 1
+    assert songs[0].title == mf.title
