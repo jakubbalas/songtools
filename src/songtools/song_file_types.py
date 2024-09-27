@@ -76,6 +76,10 @@ class SongFile(ABC):
 
         return title.strip()
 
+    @abstractmethod
+    def get_bpm(self) -> int:
+        pass
+
     def _get_artists_from_filename(self) -> str:
         """Fallback method to extract artists from filename.
 
@@ -145,6 +149,12 @@ class MP3File(SongFile):
             return ""
         return str(self.metadata.tags.get(tag, ""))
 
+    def get_bpm(self) -> int:
+        """
+        :return: BPM ID3 tag value
+        """
+        return 0
+
 
 class FlacFile(SongFile):
     def _get_metadata_artists(self) -> str:
@@ -165,3 +175,9 @@ class FlacFile(SongFile):
         if not self.metadata or not self.metadata.tags:
             return ""
         return self.metadata.tags.get(tag, "")
+
+    def get_bpm(self) -> int:
+        """
+        :return: 0 because it looks like I don't store that info
+        """
+        return 0

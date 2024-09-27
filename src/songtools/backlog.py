@@ -2,7 +2,7 @@ import click
 from pathlib import Path
 from random import randint
 from sqlalchemy.orm import Session
-from sqlalchemy import Engine
+from sqlalchemy import Engine, select
 from songtools.db.models import BacklogSong
 from songtools import config
 
@@ -173,19 +173,19 @@ def load_backlog_folder_files(
     """Load all songs from the backlog folder into the db
     This makes it easier to search and filter songs based on metadata.
     """
-    counter = 1
+    counter = 0
     songs = []
     for f in backlog_folder.rglob("*"):
         if f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES:
             path = str(f.relative_to(config.backlog_path))
             songs.append(BacklogSong(path=path))
             counter += 1
-        if counter % store_after == 0:
-            with Session(db_engine) as session:
-                session.add_all(songs)
-                session.commit()
-                songs = []
-            click.secho(f"Loaded {counter} songs", fg="white")
+            if counter % store_after == 0:
+                with Session(db_engine) as session:
+                    session.add_all(songs)
+                    session.commit()
+                    songs = []
+                click.secho(f"Loaded {counter} songs", fg="white")
 
     if songs:
         with Session(db_engine) as session:
@@ -196,3 +196,18 @@ def load_backlog_folder_files(
 
 def load_backlog_folder_metadata() -> None:
     """Load all metadata"""
+    counter = 0
+
+    with Session(config.get_engine()) as session:
+        stm = select(BacklogSong).where(BacklogSong.title is None)
+        for db_song in session.scalars(stm):
+            song = get_song_file(Path(db_song.path))
+            db_song.title = song.get_title()
+            db_song.artists = song.get_artists()
+            db_song.bpm = song.get_bpm()
+
+            session.commit()
+
+            if counter % 500 == 0:
+                click.secho(f"Loaded metadata for {counter}", fg="green")
+    click.secho(f"Loaded metadata for {counter} songs", fg="green")
