@@ -37,6 +37,26 @@ class MetaRetriever(ABC):
         ...
 
     @property
+    @abstractmethod
+    def year(self) -> int:
+        ...
+
+    @property
+    @abstractmethod
+    def key(self) -> str:
+        ...
+
+    @property
+    @abstractmethod
+    def energy(self) -> int:
+        ...
+
+    @property
+    @abstractmethod
+    def genre(self) -> str:
+        ...
+
+    @property
     def duration_seconds(self) -> int:
         return math.ceil(self.metadata.info.length)
 
@@ -113,6 +133,10 @@ class SongFile:
         return title.strip()
 
     @property
+    def file_size_kb(self) -> int:
+        return math.ceil(self.path.stat().st_size / 1024)
+
+    @property
     def bpm(self) -> int:
         if not self.metadata:
             return 0
@@ -120,8 +144,27 @@ class SongFile:
 
     @property
     def genre(self) -> str:
-        """super specific for my folder structure, will be removed"""
-        return str(self.path.relative_to(config.backlog_path)).split("/")[0].split("-")[0]
+        if not self.metadata:
+            return str(self.path.relative_to(config.backlog_path)).split("/")[0].split("-")[0]
+        return self.metadata.genre
+
+    @property
+    def year(self) -> int:
+        if not self.metadata:
+            return 0
+        return self.metadata.year
+
+    @property
+    def key(self) -> str:
+        if not self.metadata:
+            return ""
+        return self.metadata.key
+
+    @property
+    def energy(self) -> int:
+        if not self.metadata:
+            return 0
+        return self.metadata.energy
 
     def _get_artists_from_filename(self) -> str:
         """Fallback method to extract artists from filename."""
@@ -146,9 +189,38 @@ class MP3File(MetaRetriever):
         bpm = self._get_tag("TBPM")
         return int(bpm) if bpm else 0
 
+    @property
+    def year(self) -> int:
+        release_date = self.metadata.get("TDRC")
+        return release_date.text[0].year if release_date else 0
+
+    @property
+    def key(self) -> str:
+        key = self._get_tag("TKEY")
+        if not key:
+            key_part = self._get_tag("COMM::eng")
+            if key_part and "ENERGY" in key_part:
+                key = key_part.split("-")[0].strip()
+        return key if key else ""
+
+    @property
+    def energy(self) -> int:
+        energy = self._get_tag("TXXX:EnergyLevel")
+        if not energy:
+            energy_part = self._get_tag("COMM::eng")
+            if energy_part and "Energy" in energy_part:
+                energy = energy_part.split(" ")[-1].strip()
+        return int(energy) if energy else 0
+
+    @property
+    def genre(self) -> str:
+        genre = self._get_tag("TCON")
+        return genre if genre else ""
+
     def _get_tag(self, tag: str) -> str | None:
         tag = self.metadata.get(tag)
         return tag.text[0] if tag else None
+
 
 class FlacFile(MetaRetriever):
     @property
@@ -162,3 +234,32 @@ class FlacFile(MetaRetriever):
     @property
     def bpm(self) -> int:
         return int(self.metadata.get("bpm", [0])[0])
+
+    @property
+    def year(self) -> int:
+        date = int(self.metadata.get("date", [""])[0].split("-")[0])
+        if not date:
+            date = int(self.metadata.get("release date", [""])[0].split("-")[0])
+        return date
+
+    @property
+    def key(self) -> str:
+        key = self.metadata.get("initialkey")
+        if not key:
+            key_part = self.metadata.get("comment")
+            if key_part and "ENERGY" in key_part:
+                key = key_part.split("-")[0].strip()
+        return key if key else ""
+
+    @property
+    def energy(self) -> int:
+        energy = self._get_tag("energylevel")
+        if not energy:
+            energy_part = self._get_tag("comment")
+            if energy_part and "Energy" in energy_part:
+                energy = energy_part.split(" ")[-1].strip()
+        return int(energy) if energy else 0
+
+    @property
+    def genre(self) -> str:
+        return self.metadata.get("genre", [""])[0]
