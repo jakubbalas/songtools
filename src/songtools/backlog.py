@@ -5,9 +5,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import Engine, select
 from songtools.db.models import BacklogSong
 from songtools import config
+from songtools.db.session import get_engine
 
 from songtools.naming import has_cyrillic, build_correct_song_file_name
-from songtools.song_file_types import get_song_file, SongFile, UnableToExtractData
+from songtools.song_file_types import SongFile, UnableToExtractData
 
 IRRELEVANT_SUFFIXES = [
     ".accurip",
@@ -40,7 +41,7 @@ def handle_music_files(root_path: Path) -> None:
             click.secho(f"Unsupported music file {f}", fg="yellow", bg="white")
             continue
         try:
-            song = get_song_file(f)
+            song = SongFile(f)
         except UnableToExtractData:
             click.secho(f"Can't extract metadata from file {f}", fg="red")
             continue
@@ -61,7 +62,7 @@ def rename_songs_from_metadata(song_path: Path, song: SongFile) -> None:
     :param song_path: Path to the song file
     :param song: Implementation of a song file object from metadata
     """
-    new_name = build_correct_song_file_name(song.get_artists(), song.get_title())
+    new_name = build_correct_song_file_name(song.artists, song.title)
     # Note: some filesystems don't like if I only change file casing
     #       - that's why I have to make a tmp name first
     if new_name.lower() != song_path.stem.lower():
@@ -139,7 +140,7 @@ def remove_music_mixes(song_path: Path, song: SongFile) -> bool:
 
     :return: True if the dj mix was removed, False otherwise
     """
-    if song.get_duration_seconds() > MUSIC_MIX_MIN_SECONDS:
+    if song.duration_seconds > MUSIC_MIX_MIN_SECONDS:
         click.secho(f"Removing DJ mix {song_path}", fg="yellow")
         song_path.unlink()
         return True
@@ -194,17 +195,17 @@ def load_backlog_folder_files(
     click.secho(f"Loaded {counter} songs", fg="green")
 
 
-def load_backlog_folder_metadata() -> None:
+def load_backlog_folder_metadata(db_engine: Engine) -> None:
     """Load all metadata"""
     counter = 0
 
-    with Session(config.get_engine()) as session:
+    with Session(db_engine) as session:
         stm = select(BacklogSong).where(BacklogSong.title is None)
         for db_song in session.scalars(stm):
-            song = get_song_file(Path(db_song.path))
-            db_song.title = song.get_title()
-            db_song.artists = song.get_artists()
-            db_song.bpm = song.get_bpm()
+            song = SongFile(Path(db_song.path))
+            db_song.title = song.title
+            db_song.artists = song.artists
+            db_song.bpm = song.bpm
 
             session.commit()
 

@@ -129,7 +129,7 @@ def test_songs_from_the_db_get_metadata_loaded(test_folder):
     song_1.write_bytes(data)
 
     load_backlog_folder_files(test_folder, engine, store_after=9)
-    load_backlog_folder_metadata()
+    load_backlog_folder_metadata(engine)
 
     session = sessionmaker(bind=engine)
     session = session()
