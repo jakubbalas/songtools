@@ -139,7 +139,8 @@ class MP3File(MetaRetriever):
 
     @property
     def bpm(self) -> int:
-        return int(self._get_tag("TBPM"))
+        bpm = self._get_tag("TBPM")
+        return int(bpm) if bpm else 0
 
     def _get_tag(self, tag: str) -> str | None:
         tag = self.metadata.get(tag)

@@ -1,6 +1,6 @@
 from songtools.conftest import create_test_mp3_data, MetadataFields
 from pathlib import Path
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from songtools.backlog import (
     clean_preimport_folder,
     IRRELEVANT_SUFFIXES,
@@ -134,5 +134,6 @@ def test_songs_from_the_db_get_metadata_loaded(test_folder):
     session = sessionmaker(bind=engine)
     session = session()
     songs = session.query(BacklogSong).all()
+
     assert len(songs) == 1
     assert songs[0].title == mf.title
