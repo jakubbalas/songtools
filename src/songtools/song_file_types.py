@@ -4,6 +4,7 @@ import math
 
 from abc import ABC, abstractmethod
 from pathlib import Path
+from songtools import config as config
 
 
 class UnsupportedSongType(Exception):
@@ -90,7 +91,6 @@ class SongFile:
         """
         :return: Duration of the song in seconds
         """
-        print(self.metadata)
         if self.metadata is None:
             click.secho(
                 "Can't determine duration of song without metadata.",
@@ -113,11 +113,15 @@ class SongFile:
         return title.strip()
 
     @property
-    def bpm(self):
+    def bpm(self) -> int:
         if not self.metadata:
             return 0
         return self.metadata.bpm
 
+    @property
+    def genre(self) -> str:
+        """super specific for my folder structure, will be removed"""
+        return str(self.path.relative_to(config.backlog_path)).split("/")[0].split("-")[0]
 
     def _get_artists_from_filename(self) -> str:
         """Fallback method to extract artists from filename."""

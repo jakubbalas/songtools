@@ -206,6 +206,7 @@ def load_backlog_folder_metadata(db_engine: Engine) -> None:
             db_song.title = song.title
             db_song.artists = ",".join(song.artists)
             db_song.bpm = song.bpm
+            db_song.genre = song.genre
 
             session.commit()
 
