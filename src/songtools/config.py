@@ -29,5 +29,9 @@ class Config:
 
     backlog_path: str = env.str("BACKLOG_PATH")
 
+    log_store: bool = env.bool("LOG_SAVE", False)
+    log_dir: str = env.str("LOG_DIR_PATH", "/tmp/")
+    log_store_severity: list[str] = ["CHECK", "WARN", "ERR"]
+
 
 config = Config()

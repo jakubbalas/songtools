@@ -1,6 +1,6 @@
 import click
 from pathlib import Path
-from songtools.backlog import clean_preimport_folder, load_backlog_folder_files
+from songtools.backlog import clean_preimport_folder, load_backlog_folder_files, load_backlog_folder_metadata
 from songtools.db.session import get_engine
 
 
@@ -37,9 +37,10 @@ def load_backlog_folder_init(folder_path):
 
 
 @backlog.command()
-def load_backlog_folder_metadata():
+@click.option('--path-filter', default=None, help='String to filter the paths for loading metadata')
+def load_backlog_folder_meta(path_filter):
     click.echo("Loading metadata")
-    load_backlog_folder_metadata()
+    load_backlog_folder_metadata(get_engine(), path_filter=path_filter)
     click.echo("Done")
 
 
