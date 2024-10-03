@@ -13,17 +13,20 @@ IRRELEVANT_SUFFIXES = [
     ".accurip",
     ".bpm",
     ".cue",
+    ".docx",
+    ".ico",
     ".jpg",
     ".log",
     ".m3u",
     ".nfo",
     ".png",
+    ".sfv",
     ".txt",
     ".url",
 ]
 SUPPORTED_MUSIC_TYPES = [".mp3", ".flac"]
 MUSIC_MIX_MIN_SECONDS = 1000
-META_FILES = [".DS_Store"]
+META_FILES = [".DS_Store", "desktop.ini"]
 
 
 def handle_music_files(root_path: Path) -> None:
@@ -115,7 +118,7 @@ def remove_irrelevant_files(root_path: Path) -> None:
     :param Path root_path: Root path to the backlog folder
     """
     for f in root_path.rglob("*"):
-        if f.is_file() and f.suffix in IRRELEVANT_SUFFIXES:
+        if f.is_file() and f.suffix.lower() in IRRELEVANT_SUFFIXES:
             echo(f"Removing irrelevant file {f}", "OK")
             f.unlink()
 
