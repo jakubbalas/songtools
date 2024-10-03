@@ -160,7 +160,7 @@ def clean_preimport_folder(backlog_folder: Path) -> None:
 
     :param Path backlog_folder: Root path to the backlog folder
     """
-    if not backlog_folder.exists():
+    if not backlog_folder.exists() or not backlog_folder.is_dir():
         echo(f"Folder {backlog_folder} does not exist", "ERR")
         return
     remove_irrelevant_files(backlog_folder)

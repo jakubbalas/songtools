@@ -9,32 +9,43 @@ from songtools.db.session import get_engine
 
 
 @click.group()
-def app():
+def app() -> None:
     pass
 
 
 @app.group()
-def backlog():
+def backlog() -> None:
     pass
 
 
 @backlog.command()
-def load_songs():
+def load_songs() -> None:
     # TODO: implement
     click.echo("Loading songs")
 
 
 @backlog.command()
 @click.argument("folder_path")
-def clean_folder(folder_path):
+@click.option(
+    "--path-select",
+    default=None,
+    help="Select",
+)
+def clean_folder(folder_path: str, path_select: str) -> None:
     click.echo("Cleaning songs")
-    clean_preimport_folder(Path(folder_path))
+    base_folder = Path(folder_path)
+    if not path_select:
+        clean_preimport_folder(base_folder)
+    else:
+        for p in base_folder.glob(path_select):
+            print(p)
+            clean_preimport_folder(p)
     click.echo("Done")
 
 
 @backlog.command()
 @click.argument("folder_path")
-def load_backlog_folder_init(folder_path):
+def load_backlog_folder_init(folder_path: str) -> None:
     click.echo("Loading songs")
     load_backlog_folder_files(Path(folder_path), get_engine())
     click.echo("Done")
@@ -46,7 +57,7 @@ def load_backlog_folder_init(folder_path):
     default=None,
     help="String to filter the paths for loading metadata",
 )
-def load_backlog_folder_meta(path_filter):
+def load_backlog_folder_meta(path_filter: str) -> None:
     click.echo("Loading metadata")
     load_backlog_folder_metadata(get_engine(), path_filter=path_filter)
     click.echo("Done")
