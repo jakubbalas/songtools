@@ -36,6 +36,9 @@ def handle_music_files(root_path: Path) -> None:
     for f in root_path.rglob("*"):
         if f.is_dir():
             continue
+        elif f.name in META_FILES:
+            echo(f"Skipping meta file {f.stem}", "INFO")
+            continue
         elif f.suffix not in SUPPORTED_MUSIC_TYPES:
             echo(f"Unsupported music file {f}", "CHECK")
             continue

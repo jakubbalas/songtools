@@ -21,6 +21,6 @@ def echo(msg: str, msg_type: str = "INFO") -> None:
 
     click.secho(msg, fg=COLOR_CFG[msg_type]["fg"], bg=COLOR_CFG[msg_type]["bg"])
 
-    if config.log_store:
+    if config.log_store and msg_type in config.log_store_type:
         with open(Path(config.log_dir) / FILE_NAME, "a+") as f:
-            f.write(f"[{msg_type}] {msg}")
+            f.writelines([f"[{msg_type}] {msg}"])
