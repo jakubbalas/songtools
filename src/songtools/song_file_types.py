@@ -23,38 +23,31 @@ class MetaRetriever(ABC):
 
     @property
     @abstractmethod
-    def artists(self) -> str:
-        ...
+    def artists(self) -> str: ...
 
     @property
     @abstractmethod
-    def title(self) -> str:
-        ...
+    def title(self) -> str: ...
 
     @property
     @abstractmethod
-    def bpm(self) -> int:
-        ...
+    def bpm(self) -> int: ...
 
     @property
     @abstractmethod
-    def year(self) -> int:
-        ...
+    def year(self) -> int: ...
 
     @property
     @abstractmethod
-    def key(self) -> str:
-        ...
+    def key(self) -> str: ...
 
     @property
     @abstractmethod
-    def energy(self) -> int:
-        ...
+    def energy(self) -> int: ...
 
     @property
     @abstractmethod
-    def genre(self) -> str:
-        ...
+    def genre(self) -> str: ...
 
     @property
     def duration_seconds(self) -> int:
@@ -76,7 +69,9 @@ class SongFile:
         self._check_naming()
 
     def _check_naming(self):
-        if self.path.stem.count("-") != 1 and (not self.metadata or not (self.metadata.artists or self.metadata.title)):
+        if self.path.stem.count("-") != 1 and (
+            not self.metadata or not (self.metadata.artists or self.metadata.title)
+        ):
             raise UnableToExtractData(
                 f"Unable to extract data from metadata or filename: {self.path}."
             )
@@ -89,7 +84,6 @@ class SongFile:
         else:
             raise UnsupportedSongType(f"Song File {self.path} is not supported.")
 
-
     @property
     def artists(self) -> list[str]:
         """Retrieve artists from metadata, or filename if metadata is not present.
@@ -98,7 +92,7 @@ class SongFile:
         """
         if self.metadata and self.metadata.artists:
             artists = self.metadata.artists
-        else :
+        else:
             click.secho(
                 f"No artist metadata for song {self.path}, using file name.",
                 fg="yellow",
@@ -145,7 +139,11 @@ class SongFile:
     @property
     def genre(self) -> str:
         if not self.metadata:
-            return str(self.path.relative_to(config.backlog_path)).split("/")[0].split("-")[0]
+            return (
+                str(self.path.relative_to(config.backlog_path))
+                .split("/")[0]
+                .split("-")[0]
+            )
         return self.metadata.genre
 
     @property

@@ -1,6 +1,6 @@
 from songtools.conftest import create_test_mp3_data, MetadataFields
 from pathlib import Path
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker
 from songtools.backlog import (
     clean_preimport_folder,
     IRRELEVANT_SUFFIXES,

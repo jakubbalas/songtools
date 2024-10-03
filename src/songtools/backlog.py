@@ -201,7 +201,7 @@ def load_backlog_folder_metadata(db_engine: Engine, path_filter=None) -> None:
     counter = 0
 
     with Session(db_engine) as session:
-        stm = select(BacklogSong).where(BacklogSong.title==None)
+        stm = select(BacklogSong).where(BacklogSong.title == None)  # noqa: E711
         for db_song in session.scalars(stm).all():
             song = SongFile(config.backlog_path / Path(db_song.path))
             db_song.title = song.title

@@ -10,7 +10,7 @@ from songtools.song_file_types import (
 
 def test_missing_song_file_raises_error():
     with pytest.raises(FileNotFoundError):
-       SongFile(Path("test"))
+        SongFile(Path("test"))
 
 
 def test_unsupported_song_file_raises_error(test_folder: Path):
