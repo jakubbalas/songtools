@@ -1,4 +1,4 @@
-import click
+from songtools.utils import echo
 from pathlib import Path
 from random import randint
 from sqlalchemy.orm import Session
@@ -7,7 +7,7 @@ from songtools.db.models import BacklogSong
 from songtools import config
 
 from songtools.naming import has_cyrillic, build_correct_song_file_name
-from songtools.song_file_types import get_song_file, SongFile, UnableToExtractData
+from songtools.song_file_types import SongFile, UnableToExtractData
 
 IRRELEVANT_SUFFIXES = [
     ".accurip",
@@ -36,21 +36,23 @@ def handle_music_files(root_path: Path) -> None:
     for f in root_path.rglob("*"):
         if f.is_dir():
             continue
+        elif f.name in META_FILES:
+            echo(f"Skipping meta file {f.stem}", "INFO")
+            continue
         elif f.suffix not in SUPPORTED_MUSIC_TYPES:
-            click.secho(f"Unsupported music file {f}", fg="yellow", bg="white")
+            echo(f"Unsupported music file {f}", "CHECK")
             continue
         try:
-            song = get_song_file(f)
+            song = SongFile(f)
         except UnableToExtractData:
-            click.secho(f"Can't extract metadata from file {f}", fg="red")
+            echo(f"Can't extract metadata from file {f}", "CHECK")
             continue
         if remove_music_mixes(f, song):
             continue
         try:
             rename_songs_from_metadata(f, song)
         except OSError as e:
-            click.secho(f"Can't rename file {f}", fg="red")
-            click.secho(f"Error: {e}", fg="red")
+            echo(f"Can't rename file {f}  || Error: {e}", "ERR")
 
 
 def rename_songs_from_metadata(song_path: Path, song: SongFile) -> None:
@@ -61,17 +63,17 @@ def rename_songs_from_metadata(song_path: Path, song: SongFile) -> None:
     :param song_path: Path to the song file
     :param song: Implementation of a song file object from metadata
     """
-    new_name = build_correct_song_file_name(song.get_artists(), song.get_title())
+    new_name = build_correct_song_file_name(song.artists, song.title)
     # Note: some filesystems don't like if I only change file casing
     #       - that's why I have to make a tmp name first
     if new_name.lower() != song_path.stem.lower():
-        click.secho(f"Renaming {song_path} to {new_name}", fg="green")
         song_path.rename(song_path.with_stem(new_name))
+        echo(f"Renamed {song_path} to {new_name}", "OK")
     elif new_name != song_path.stem:
-        click.secho(f"Fixing song casing {song_path} to {new_name}", fg="green")
         temp_name = new_name + str(randint(10000000, 99999999))
         song_path = song_path.rename(song_path.with_stem(temp_name))
         song_path.rename(song_path.with_stem(new_name))
+        echo(f"Fixed song casing {song_path} to {new_name}", "OK")
 
 
 def remove_empty_folders(root_path: Path) -> None:
@@ -114,7 +116,7 @@ def remove_irrelevant_files(root_path: Path) -> None:
     """
     for f in root_path.rglob("*"):
         if f.is_file() and f.suffix in IRRELEVANT_SUFFIXES:
-            click.secho(f"Removing irrelevant file {f}", fg="yellow")
+            echo(f"Removing irrelevant file {f}", "OK")
             f.unlink()
 
 
@@ -126,7 +128,7 @@ def remove_files_with_cyrilic(root_path: Path) -> None:
     """
     for f in root_path.rglob("*"):
         if f.is_file() and has_cyrillic(f.name):
-            click.secho(f"Removing cyrillic file {f}", fg="yellow")
+            echo(f"Removing cyrillic file {f}", "OK")
             f.unlink()
 
 
@@ -139,8 +141,8 @@ def remove_music_mixes(song_path: Path, song: SongFile) -> bool:
 
     :return: True if the dj mix was removed, False otherwise
     """
-    if song.get_duration_seconds() > MUSIC_MIX_MIN_SECONDS:
-        click.secho(f"Removing DJ mix {song_path}", fg="yellow")
+    if song.duration_seconds > MUSIC_MIX_MIN_SECONDS:
+        echo(f"Removing DJ mix {song_path}", "OK")
         song_path.unlink()
         return True
     else:
@@ -159,7 +161,7 @@ def clean_preimport_folder(backlog_folder: Path) -> None:
     :param Path backlog_folder: Root path to the backlog folder
     """
     if not backlog_folder.exists():
-        click.secho(f"Folder {backlog_folder} does not exist", fg="red")
+        echo(f"Folder {backlog_folder} does not exist", "ERR")
         return
     remove_irrelevant_files(backlog_folder)
     remove_files_with_cyrilic(backlog_folder)
@@ -185,29 +187,35 @@ def load_backlog_folder_files(
                     session.add_all(songs)
                     session.commit()
                     songs = []
-                click.secho(f"Loaded {counter} songs", fg="white")
+                echo(f"Loaded {counter} songs", "INFO")
 
     if songs:
         with Session(db_engine) as session:
             session.add_all(songs)
             session.commit()
-    click.secho(f"Loaded {counter} songs", fg="green")
+    echo(f"Loaded {counter} songs", "INFO")
 
 
-def load_backlog_folder_metadata() -> None:
+def load_backlog_folder_metadata(db_engine: Engine, path_filter=None) -> None:
     """Load all metadata"""
     counter = 0
 
-    with Session(config.get_engine()) as session:
-        stm = select(BacklogSong).where(BacklogSong.title is None)
-        for db_song in session.scalars(stm):
-            song = get_song_file(Path(db_song.path))
-            db_song.title = song.get_title()
-            db_song.artists = song.get_artists()
-            db_song.bpm = song.get_bpm()
+    with Session(db_engine) as session:
+        stm = select(BacklogSong).where(BacklogSong.title == None)  # noqa: E711
+        for db_song in session.scalars(stm).all():
+            song = SongFile(config.backlog_path / Path(db_song.path))
+            db_song.title = song.title
+            db_song.artists = ",".join(song.artists)
+            db_song.bpm = song.bpm
+            db_song.genre = song.genre
+            db_song.duration_seconds = song.duration_seconds
+            db_song.year = song.year
+            db_song.key = song.key
+            db_song.energy = song.energy
+            db_song.file_size_kb = song.file_size_kb
 
             session.commit()
 
             if counter % 500 == 0:
-                click.secho(f"Loaded metadata for {counter}", fg="green")
-    click.secho(f"Loaded metadata for {counter} songs", fg="green")
+                echo(f"Loaded metadata for {counter}", "INFO")
+    echo(f"Loaded metadata for {counter} songs", "INFO")
