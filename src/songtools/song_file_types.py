@@ -31,7 +31,7 @@ class MetaRetriever(ABC):
 
     @property
     @abstractmethod
-    def bpm(self) -> int: ...
+    def bpm(self) -> float: ...
 
     @property
     @abstractmethod
@@ -131,9 +131,9 @@ class SongFile:
         return math.ceil(self.path.stat().st_size / 1024)
 
     @property
-    def bpm(self) -> int:
+    def bpm(self) -> float:
         if not self.metadata:
-            return 0
+            return 0.0
         return self.metadata.bpm
 
     @property
@@ -183,9 +183,9 @@ class MP3File(MetaRetriever):
         return self._get_tag("TIT2")
 
     @property
-    def bpm(self) -> int:
+    def bpm(self) -> float:
         bpm = self._get_tag("TBPM")
-        return int(bpm) if bpm else 0
+        return float(bpm) if bpm else 0.0
 
     @property
     def year(self) -> int:
@@ -230,8 +230,8 @@ class FlacFile(MetaRetriever):
         return ", ".join(self.metadata.get("title", ""))
 
     @property
-    def bpm(self) -> int:
-        return int(self.metadata.get("bpm", [0])[0])
+    def bpm(self) -> float:
+        return float(self.metadata.get("bpm", [0])[0])
 
     @property
     def year(self) -> int:
@@ -242,18 +242,18 @@ class FlacFile(MetaRetriever):
 
     @property
     def key(self) -> str:
-        key = self.metadata.get("initialkey")
+        key = self.metadata.get("initialkey")[0]
         if not key:
-            key_part = self.metadata.get("comment")
+            key_part = self.metadata.get("comment")[0]
             if key_part and "ENERGY" in key_part:
                 key = key_part.split("-")[0].strip()
         return key if key else ""
 
     @property
     def energy(self) -> int:
-        energy = self._get_tag("energylevel")
+        energy = self.metadata.get("energylevel")[0]
         if not energy:
-            energy_part = self._get_tag("comment")
+            energy_part = self.metadata.get("comment")[0]
             if energy_part and "Energy" in energy_part:
                 energy = energy_part.split(" ")[-1].strip()
         return int(energy) if energy else 0

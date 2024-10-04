@@ -1,3 +1,4 @@
+import click
 from songtools.utils import echo
 from pathlib import Path
 from random import randint
@@ -199,26 +200,30 @@ def load_backlog_folder_files(
     echo(f"Loaded {counter} songs", "INFO")
 
 
-def load_backlog_folder_metadata(db_engine: Engine, path_filter=None) -> None:
+def load_backlog_folder_metadata(
+    db_engine: Engine, path_select: str | None = None
+) -> None:
     """Load all metadata"""
-    counter = 0
-
     with Session(db_engine) as session:
         stm = select(BacklogSong).where(BacklogSong.title == None)  # noqa: E711
-        for db_song in session.scalars(stm).all():
-            song = SongFile(config.backlog_path / Path(db_song.path))
-            db_song.title = song.title
-            db_song.artists = ",".join(song.artists)
-            db_song.bpm = song.bpm
-            db_song.genre = song.genre
-            db_song.duration_seconds = song.duration_seconds
-            db_song.year = song.year
-            db_song.key = song.key
-            db_song.energy = song.energy
-            db_song.file_size_kb = song.file_size_kb
+        if path_select:
+            stm = stm.where(BacklogSong.path.ilike(path_select))
+        total = session.query(BacklogSong.path).count()
+        with click.progressbar(
+            session.scalars(stm).all(),
+            length=total,
+            label="Loading metadata for songs",
+        ) as bar:
+            for db_song in bar:
+                song = SongFile(config.backlog_path / Path(db_song.path))
+                db_song.title = song.title
+                db_song.artists = ",".join(song.artists)
+                db_song.bpm = song.bpm
+                db_song.genre = song.genre
+                db_song.duration_seconds = song.duration_seconds
+                db_song.year = song.year
+                db_song.key = song.key
+                db_song.energy = song.energy
+                db_song.file_size_kb = song.file_size_kb
 
-            session.commit()
-
-            if counter % 500 == 0:
-                echo(f"Loaded metadata for {counter}", "INFO")
-    echo(f"Loaded metadata for {counter} songs", "INFO")
+                session.commit()
