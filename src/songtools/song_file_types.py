@@ -77,10 +77,13 @@ class SongFile:
             )
 
     def _load_metadata(self) -> MetaRetriever:
-        if self.path.suffix == ".mp3":
+        sfx = self.path.suffix.lower()
+        if sfx == ".mp3":
             return MP3File(self.path)
-        elif self.path.suffix == ".flac":
+        elif sfx == ".flac":
             return FlacFile(self.path)
+        elif sfx == ".m4a":
+            return M4AFile(self.path)
         else:
             raise UnsupportedSongType(f"Song File {self.path} is not supported.")
 
@@ -261,6 +264,50 @@ class FlacFile(MetaRetriever):
     @property
     def genre(self) -> str:
         return self._get_tag("genre")
+
+    def _get_tag(self, tag: str, default="") -> str:
+        return self.metadata.get(tag, [default])[0]
+
+
+class M4AFile(MetaRetriever):
+    @property
+    def artists(self) -> str:
+        return self._get_tag("©ART")
+
+    @property
+    def title(self) -> str:
+        return self._get_tag("©nam")
+
+    @property
+    def bpm(self) -> float:
+        return float(self._get_tag("tmpo", "0"))
+
+    @property
+    def year(self) -> int:
+        try:
+            return int(self._get_tag("©day", "0").split("-")[0])
+        except ValueError:
+            return 0
+
+    @property
+    def key(self) -> str:
+        key = ""
+        comment = self._get_tag("©cmt")
+        if comment and "ENERGY" in comment:
+            key = comment.split("-")[0].strip()
+        return key
+
+    @property
+    def energy(self) -> int:
+        energy = 0
+        comment = self._get_tag("©cmt")
+        if comment and "Energy" in comment:
+            energy = int(comment.split(" ")[-1].strip())
+        return energy
+
+    @property
+    def genre(self) -> str:
+        return self._get_tag("©gen")
 
     def _get_tag(self, tag: str, default="") -> str:
         return self.metadata.get(tag, [default])[0]

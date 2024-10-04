@@ -8,7 +8,7 @@ from songtools.db.models import BacklogSong
 from songtools import config
 
 from songtools.naming import has_cyrillic, build_correct_song_file_name
-from songtools.song_file_types import SongFile, UnableToExtractData
+from songtools.song_file_types import SongFile, UnableToExtractData, UnsupportedSongType
 
 IRRELEVANT_SUFFIXES = [
     ".accurip",
@@ -46,14 +46,16 @@ def handle_music_files(root_path: Path) -> None:
         elif f.name in META_FILES:
             echo(f"Skipping meta file {f.stem}", "INFO")
             continue
-        elif f.suffix not in SUPPORTED_MUSIC_TYPES:
-            echo(f"Unsupported music file {f}", "CHECK")
-            continue
+
         try:
             song = SongFile(f)
         except UnableToExtractData:
             echo(f"Can't extract metadata from file {f}", "CHECK")
             continue
+        except UnsupportedSongType:
+            echo(f"Unsupported music file {f}", "CHECK")
+            continue
+
         if remove_music_mixes(f, song):
             continue
         try:
