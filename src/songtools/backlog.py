@@ -215,15 +215,23 @@ def load_backlog_folder_metadata(
             label="Loading metadata for songs",
         ) as bar:
             for db_song in bar:
-                song = SongFile(config.backlog_path / Path(db_song.path))
-                db_song.title = song.title
-                db_song.artists = ",".join(song.artists)
-                db_song.bpm = song.bpm
-                db_song.genre = song.genre
-                db_song.duration_seconds = song.duration_seconds
-                db_song.year = song.year
-                db_song.key = song.key
-                db_song.energy = song.energy
-                db_song.file_size_kb = song.file_size_kb
+                try:
+                    song = SongFile(config.backlog_path / Path(db_song.path))
+                    db_song.title = song.title
+                    db_song.artists = ",".join(song.artists)
+                    db_song.bpm = song.bpm
+                    db_song.genre = song.genre
+                    db_song.duration_seconds = song.duration_seconds
+                    db_song.year = song.year
+                    db_song.key = song.key
+                    db_song.energy = song.energy
+                    db_song.file_size_kb = song.file_size_kb
 
-                session.commit()
+                    session.commit()
+                except Exception as e:
+                    session.rollback()
+                    echo(
+                        f"Error loading metadata for {db_song.path} || Error: {e}",
+                        "ERR",
+                    )
+                    continue

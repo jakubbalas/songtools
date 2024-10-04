@@ -23,4 +23,4 @@ def echo(msg: str, msg_type: str = "INFO") -> None:
 
     if config.log_store and msg_type in config.log_store_type:
         with open(Path(config.log_dir) / FILE_NAME, "a+") as f:
-            f.writelines([f"[{msg_type}] {msg}"])
+            f.writelines([f"[{msg_type}] {msg}\n"])
