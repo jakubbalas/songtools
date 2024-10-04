@@ -1,3 +1,4 @@
+from mutagen import flac
 import pytest
 from pathlib import Path
 from songtools.conftest import create_test_mp3_data, MetadataFields
@@ -81,6 +82,14 @@ def test_flac_file_gets_metadata(test_folder: Path, flac_data):
     test_flac_file = test_folder / "JdPouch - shouldwork.flac"
     test_flac_file.write_bytes(flac_data)
 
+    audio = flac.FLAC(test_flac_file)
+    audio["artist"] = "JdPouch"
+    audio["bpm"] = "120"
+    audio["initialkey"] = "7A"
+    audio.save()
+
     song = SongFile(test_flac_file)
     assert type(song) is SongFile
     assert song.artists == ["JdPouch"]
+    assert song.bpm == 120.0
+    assert song.key == "7A"

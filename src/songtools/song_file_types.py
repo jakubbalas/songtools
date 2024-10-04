@@ -223,41 +223,44 @@ class MP3File(MetaRetriever):
 class FlacFile(MetaRetriever):
     @property
     def artists(self) -> str:
-        return ", ".join(self.metadata.get("artist", ""))
+        return ", ".join(self.metadata.get("artist", [""]))
 
     @property
     def title(self) -> str:
-        return ", ".join(self.metadata.get("title", ""))
+        return ", ".join(self.metadata.get("title", [""]))
 
     @property
     def bpm(self) -> float:
-        return float(self.metadata.get("bpm", [0])[0])
+        return float(self._get_tag("bpm", "0"))
 
     @property
     def year(self) -> int:
-        date = int(self.metadata.get("date", [""])[0].split("-")[0])
+        date = int(self._get_tag("date").split("-")[0])
         if not date:
-            date = int(self.metadata.get("release date", [""])[0].split("-")[0])
+            date = int(self._get_tag("release date").split("-")[0])
         return date
 
     @property
     def key(self) -> str:
-        key = self.metadata.get("initialkey")[0]
+        key = self._get_tag("initialkey")
         if not key:
-            key_part = self.metadata.get("comment")[0]
+            key_part = self._get_tag("comment")
             if key_part and "ENERGY" in key_part:
                 key = key_part.split("-")[0].strip()
-        return key if key else ""
+        return key
 
     @property
     def energy(self) -> int:
-        energy = self.metadata.get("energylevel")[0]
+        energy = self._get_tag("energylevel")
         if not energy:
-            energy_part = self.metadata.get("comment")[0]
+            energy_part = self._get_tag("comment")
             if energy_part and "Energy" in energy_part:
                 energy = energy_part.split(" ")[-1].strip()
         return int(energy) if energy else 0
 
     @property
     def genre(self) -> str:
-        return self.metadata.get("genre", [""])[0]
+        return self._get_tag("genre")
+
+    def _get_tag(self, tag: str, default="") -> str:
+        return self.metadata.get(tag, [default])[0]

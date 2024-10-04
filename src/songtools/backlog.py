@@ -12,11 +12,13 @@ from songtools.song_file_types import SongFile, UnableToExtractData
 
 IRRELEVANT_SUFFIXES = [
     ".accurip",
+    ".bmp",
     ".bpm",
     ".cue",
     ".docx",
     ".ico",
     ".jpg",
+    ".lnk",
     ".log",
     ".m3u",
     ".nfo",
