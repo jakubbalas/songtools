@@ -48,6 +48,10 @@ def _prepare_dirty_backlog_folder(root_folder: Path) -> Path:
     data = create_test_mp3_data(metadata=False)
     case_rename.write_bytes(data)
 
+    screaming_suffix = mixed_folder / "onetwo - threefour.MP3"
+    data = create_test_mp3_data(metadata=False)
+    screaming_suffix.write_bytes(data)
+
     return root_folder
 
 
@@ -94,7 +98,7 @@ def test_expected_folder_structure_after_cleanup(test_folder):
     tst_folder = _prepare_dirty_backlog_folder(test_folder)
     clean_preimport_folder(tst_folder)
     items = [f for f in test_folder.rglob("*")]
-    assert len(items) == 3
+    assert len(items) == 4
 
 
 def test_dj_mixes_are_removed(test_folder, test_long_mp3_data):
@@ -102,6 +106,12 @@ def test_dj_mixes_are_removed(test_folder, test_long_mp3_data):
     dj_mix.write_bytes(test_long_mp3_data)
     clean_preimport_folder(test_folder)
     assert not dj_mix.exists()
+
+
+def test_uppercase_suffixes_get_lowered(test_folder):
+    tst_folder = _prepare_dirty_backlog_folder(test_folder)
+    clean_preimport_folder(tst_folder)
+    assert (tst_folder / "mixed_folder/Onetwo - Threefour.mp3").exists()
 
 
 def test_songs_in_backlog_are_loaded_into_db(test_folder):

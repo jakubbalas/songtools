@@ -21,6 +21,7 @@ IRRELEVANT_SUFFIXES = [
     ".lnk",
     ".log",
     ".m3u",
+    ".m3u8",
     ".nfo",
     ".png",
     ".sfv",
@@ -155,6 +156,20 @@ def remove_music_mixes(song_path: Path, song: SongFile) -> bool:
         return False
 
 
+def lower_file_suffixes(root_path: Path) -> None:
+    """Lower all file suffixes in the backlog folder.
+    It will lower all file suffixes to prevent any issues with case sensitivity.
+
+    :param Path root_path: Root path to the backlog folder
+    """
+    for f in root_path.rglob("*"):
+        if f.is_file() and f.suffix.isupper():
+            new_name = f.with_suffix(f.suffix.lower())
+            if new_name != f:
+                f.rename(new_name)
+                echo(f"Lowered suffix {f} to {new_name}", "OK")
+
+
 def clean_preimport_folder(backlog_folder: Path) -> None:
     """Take the backlog folder and clean it.
     It will:
@@ -169,6 +184,7 @@ def clean_preimport_folder(backlog_folder: Path) -> None:
     if not backlog_folder.exists() or not backlog_folder.is_dir():
         echo(f"Folder {backlog_folder} does not exist", "ERR")
         return
+    lower_file_suffixes(backlog_folder)
     remove_irrelevant_files(backlog_folder)
     remove_files_with_cyrilic(backlog_folder)
     handle_music_files(backlog_folder)
