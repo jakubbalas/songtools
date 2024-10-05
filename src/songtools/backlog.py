@@ -23,6 +23,7 @@ IRRELEVANT_SUFFIXES = [
     ".m3u",
     ".m3u8",
     ".nfo",
+    ".pls",
     ".png",
     ".sfv",
     ".txt",
@@ -30,7 +31,7 @@ IRRELEVANT_SUFFIXES = [
 ]
 SUPPORTED_MUSIC_TYPES = [".mp3", ".flac"]
 MUSIC_MIX_MIN_SECONDS = 1000
-META_FILES = [".DS_Store", "desktop.ini"]
+META_FILES = [".DS_Store", "desktop.ini", "booklet.pdf"]
 
 
 def handle_music_files(root_path: Path) -> None:

@@ -78,8 +78,8 @@ class SongFile:
 
     def _load_metadata(self) -> MetaRetriever:
         sfx = self.path.suffix.lower()
-        if sfx == ".mp3":
-            return MP3File(self.path)
+        if sfx == ".mp3" or sfx == ".wav":
+            return ID3File(self.path)
         elif sfx == ".flac":
             return FlacFile(self.path)
         elif sfx == ".m4a":
@@ -176,7 +176,7 @@ class SongFile:
         return self.path.stem.split("-")[1] if self.path.stem.count("-") == 1 else ""
 
 
-class MP3File(MetaRetriever):
+class ID3File(MetaRetriever):
     @property
     def artists(self) -> str:
         return self._get_tag("TPE1")
