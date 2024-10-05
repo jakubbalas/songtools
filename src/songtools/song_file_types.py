@@ -169,11 +169,11 @@ class SongFile:
 
     def _get_artists_from_filename(self) -> str:
         """Fallback method to extract artists from filename."""
-        return self.path.stem.split("-")[0]
+        return self.path.stem.split("-")[0] if self.path.stem.count("-") == 1 else ""
 
     def _get_title_from_filename(self) -> str:
         """Fallback method to extract title from filename."""
-        return self.path.stem.split("-")[1]
+        return self.path.stem.split("-")[1] if self.path.stem.count("-") == 1 else ""
 
 
 class MP3File(MetaRetriever):
