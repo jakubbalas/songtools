@@ -26,6 +26,7 @@ IRRELEVANT_SUFFIXES = [
     ".pls",
     ".png",
     ".sfv",
+    ".tmp",
     ".txt",
     ".url",
 ]
