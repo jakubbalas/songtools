@@ -7,6 +7,9 @@ from pathlib import Path
 from songtools import config as config
 
 
+SUPPORTED_MUSIC_TYPES = [".mp3", ".flac", ".wav", ".m4a"]
+
+
 class UnsupportedSongType(Exception):
     pass
 

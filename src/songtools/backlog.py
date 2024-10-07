@@ -8,7 +8,12 @@ from songtools.db.models import BacklogSong
 from songtools import config
 
 from songtools.naming import has_cyrillic, build_correct_song_file_name
-from songtools.song_file_types import SongFile, UnableToExtractData, UnsupportedSongType
+from songtools.song_file_types import (
+    SongFile,
+    SUPPORTED_MUSIC_TYPES,
+    UnableToExtractData,
+    UnsupportedSongType,
+)
 
 IRRELEVANT_SUFFIXES = [
     ".accurip",
@@ -30,7 +35,6 @@ IRRELEVANT_SUFFIXES = [
     ".txt",
     ".url",
 ]
-SUPPORTED_MUSIC_TYPES = [".mp3", ".flac"]
 MUSIC_MIX_MIN_SECONDS = 1000
 META_FILES = [".DS_Store", "desktop.ini", "booklet.pdf"]
 
