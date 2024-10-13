@@ -235,8 +235,9 @@ def load_backlog_folder_metadata(
         if path_select:
             stm = stm.where(BacklogSong.path.ilike(path_select))
         total = session.query(BacklogSong.path).count()
+        items = session.scalars(stm).all()
         with click.progressbar(
-            session.scalars(stm).all(),
+            items,
             length=total,
             label="Loading metadata for songs",
         ) as bar:
