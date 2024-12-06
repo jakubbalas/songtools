@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from songtools.conftest import create_test_mp3_data, MetadataFields
 from pathlib import Path
 from sqlalchemy.orm import sessionmaker
@@ -104,7 +106,8 @@ def test_expected_folder_structure_after_cleanup(test_folder):
 def test_dj_mixes_are_removed(test_folder, test_long_mp3_data):
     dj_mix = test_folder / "dj - mix.mp3"
     dj_mix.write_bytes(test_long_mp3_data)
-    clean_preimport_folder(test_folder)
+    with patch('songtools.backlog.MUSIC_MIX_MIN_SECONDS', 800):
+        clean_preimport_folder(test_folder)
     assert not dj_mix.exists()
 
 
