@@ -1,16 +1,19 @@
 import re
 import string
+import hashlib
 
 from functools import reduce
 from unidecode import unidecode
+
+from songtools.song_file_types import SongFile
 
 
 def build_correct_song_file_name(artists: list[str], orig_title: str) -> str:
     """Get the filename from the metadata of the file.
     If the file has no metadata, return the styled filename.
 
-    :param list[str] artists: List of artists as mentioned in metadata.
-    :param str orig_title: Title of the song from metadata.
+    :param artists: List of artists as mentioned in metadata.
+    :param orig_title: Title of the song from metadata.
 
     :return: Valid filename that can be used.
     """
@@ -24,7 +27,7 @@ def build_correct_song_file_name(artists: list[str], orig_title: str) -> str:
 
 def handle_title(title: str) -> str:
     """
-    :param str title: Title of the song.
+    :param title: Title of the song.
     :return: Correctly formatted title.
     """
     title = basic_music_file_style(title)
@@ -36,9 +39,9 @@ def handle_title(title: str) -> str:
 def handle_artists(artists: list[str], title: str) -> list[str]:
     """Handle artists that are in the metadata.
 
-    :param list[str] artists: List of artists from metadata.
-    :param str title: original title that can contain feat artists.
-    :return: List of artists that are correctly formatted.
+    :param artists: List of artists from metadata.
+    :param title: original title that can contain feat artists.
+    :return: Correctly formatted artist names.
     """
     all_artists = []
     for a in artists:
@@ -84,7 +87,7 @@ def remove_special_characters(name: str) -> str:
 
 def remove_original_mix(name: str) -> str:
     """
-    :return: string with removed original mix suffix.
+    :return: string with removed "original mix" suffix.
     """
 
     return re.sub(r"\(\s*original( mix)?\s*\)", "", name, flags=re.I).strip()
@@ -154,3 +157,13 @@ def extract_featuring_artists(title) -> (str, list[str]):
             title = title.replace(re.search(regex[0], title, re.I).group(0), regex[1])
 
     return title, artists
+
+
+def get_song_name_hash(song: SongFile) -> str:
+    """Get a hash from the song name.
+
+    :param song: Song file data
+    :return: hashed name
+    """
+    name = build_correct_song_file_name(song.artists, song.title) + song.path.suffix
+    return hashlib.md5(name.lower().encode()).hexdigest()

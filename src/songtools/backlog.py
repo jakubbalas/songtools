@@ -4,10 +4,10 @@ from pathlib import Path
 from random import randint
 from sqlalchemy.orm import Session
 from sqlalchemy import Engine, select
-from songtools.db.models import BacklogSong
+from songtools.db.models import BacklogSong, HeardSong
 from songtools import config
 
-from songtools.naming import has_cyrillic, build_correct_song_file_name
+from songtools.naming import has_cyrillic, build_correct_song_file_name, get_song_name_hash
 from songtools.song_file_types import (
     SongFile,
     SUPPORTED_MUSIC_TYPES,
@@ -262,3 +262,54 @@ def load_backlog_folder_metadata(
                         "ERR",
                     )
                     continue
+
+
+class InsecureDeleteException(Exception):
+    pass
+
+
+def delete_song_folder(folder: Path, db_engine: Engine) -> None:
+    """Recursively remove all files and store data in the db"""
+    # TODO: implement safeguard
+    for f in folder.iterdir():
+        if f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES:
+            song = SongFile(f)
+            name_hash = get_song_name_hash(song)
+
+            with Session(db_engine) as session:
+                db_song = session.scalars(select(HeardSong).where(HeardSong.name_hash == name_hash)).first()
+                if not db_song:
+                    db_song = HeardSong(
+                        name_hash=name_hash,
+                        file_name=f.name,
+                        in_collection=False
+                    )
+                    session.add(db_song)
+                    session.commit()
+
+            f.unlink()
+        elif f.is_file() and f.suffix in IRRELEVANT_SUFFIXES:
+            f.unlink()
+        elif f.is_file():
+            raise InsecureDeleteException(f"Refusing to delete directory, unknown file found: {f}?")
+        else:
+            delete_song_folder(f, db_engine)
+    folder.rmdir()
+
+
+def dedup_song_folder(folder: Path, db_engine: Engine) -> None:
+    """Remove all duplicates from the folder"""
+    # TODO: implement deduplication logic for in_collection items and file size check
+    # TODO: implement deduplication in folder level, keep the larger item
+    for f in folder.rglob("*"):
+        if f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES:
+            try:
+                song = SongFile(f)
+            except UnableToExtractData:
+                continue
+            name_hash = get_song_name_hash(song)
+            with Session(db_engine) as session:
+                db_song = session.scalars(select(HeardSong).where(HeardSong.name_hash == name_hash)).first()
+                if db_song:
+                    click.secho(f"Duplicate found {f}", fg="green")
+                    f.unlink()

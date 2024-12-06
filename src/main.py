@@ -2,8 +2,9 @@ import click
 from pathlib import Path
 from songtools.backlog import (
     clean_preimport_folder,
+    delete_song_folder,
     load_backlog_folder_files,
-    load_backlog_folder_metadata,
+    load_backlog_folder_metadata, dedup_song_folder,
 )
 from songtools.db.session import get_engine
 
@@ -71,6 +72,25 @@ def load_backlog_folder_init(folder_path: str, path_select: str) -> None:
 def load_backlog_folder_meta(path_select: str) -> None:
     click.echo("Loading metadata")
     load_backlog_folder_metadata(get_engine(), path_select=path_select)
+    click.echo("Done")
+
+
+@backlog.command()
+@click.argument(
+    "path",
+)
+def delete_folder(path: str) -> None:
+    click.echo("Deleting folder")
+    delete_song_folder(Path(path), get_engine())
+    click.echo("Done")
+
+@backlog.command()
+@click.argument(
+    "path",
+)
+def dedup_folder(path: str) -> None:
+    click.echo("Removing duplicates from folder")
+    dedup_song_folder(Path(path), get_engine())
     click.echo("Done")
 
 

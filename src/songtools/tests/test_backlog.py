@@ -1,16 +1,21 @@
 from unittest.mock import patch
 
+import pytest
+
 from songtools.conftest import create_test_mp3_data, MetadataFields
 from pathlib import Path
+from sqlalchemy import asc
 from sqlalchemy.orm import sessionmaker
 from songtools.backlog import (
     clean_preimport_folder,
     IRRELEVANT_SUFFIXES,
     load_backlog_folder_files,
-    load_backlog_folder_metadata,
+    load_backlog_folder_metadata, delete_song_folder, InsecureDeleteException, dedup_song_folder,
 )
-from songtools.db.models import BacklogSong
+from songtools.db.models import BacklogSong, HeardSong
 from songtools.db.session import get_in_memory_engine
+from songtools.naming import get_song_name_hash
+from songtools.song_file_types import SongFile
 
 
 def _prepare_dirty_backlog_folder(root_folder: Path) -> Path:
@@ -150,3 +155,113 @@ def test_songs_from_the_db_get_metadata_loaded(test_folder):
 
     assert len(songs) == 1
     assert songs[0].title == mf.title
+
+
+def test_delete_removes_files_and_subfolders(test_folder):
+    engine = get_in_memory_engine()
+    HeardSong.metadata.create_all(engine)
+
+    song_1 = test_folder / "song_1.mp3"
+    mf = MetadataFields(title="Song uno", artist="JdPouch")
+    data = create_test_mp3_data(metadata=mf)
+    song_1.write_bytes(data)
+    song_1_name_hash = get_song_name_hash(SongFile(song_1))
+
+    song_2 = test_folder / "song_2.mp3"
+    mf = MetadataFields(title="Song  Duo", artist="JdPouch")
+    data = create_test_mp3_data(metadata=mf)
+    song_2.write_bytes(data)
+
+    one_level_dir = test_folder / "one_dir"
+    one_level_dir.mkdir()
+    (one_level_dir / "stuff.txt").touch()
+
+    two_level_dir = one_level_dir / "two_dir"
+    two_level_dir.mkdir()
+    song_3 = two_level_dir / "song_3.mp3"
+    mf = MetadataFields(title="Song  Three", artist="JdVouch")
+    data = create_test_mp3_data(metadata=mf)
+    song_3.write_bytes(data)
+
+    delete_song_folder(test_folder, engine)
+    assert not test_folder.exists()
+
+    session = sessionmaker(bind=engine)
+    session = session()
+    songs = session.query(HeardSong).order_by(asc(HeardSong.file_name)).all()
+    assert len(songs) == 3
+    assert songs[0].name_hash == song_1_name_hash
+
+
+def test_existing_item_is_not_duplicated(test_folder):
+    song_1 = test_folder / "song_1.mp3"
+    mf = MetadataFields(title="Song uno", artist="JdPouch")
+    data = create_test_mp3_data(metadata=mf)
+    song_1.write_bytes(data)
+
+    song_2 = test_folder / "song_2.mp3"
+    mf = MetadataFields(title="Song uno", artist="JdPouch")
+    data = create_test_mp3_data(metadata=mf)
+    song_2.write_bytes(data)
+
+    engine = get_in_memory_engine()
+    HeardSong.metadata.create_all(engine)
+
+    delete_song_folder(test_folder, engine)
+
+    session = sessionmaker(bind=engine)
+    session = session()
+    songs = session.query(HeardSong).order_by(asc(HeardSong.file_name)).all()
+    assert len(songs) == 1
+
+
+def test_unknown_file_raises_exception(test_folder):
+    unknown_file = test_folder / "unknown_file.ggwp"
+    unknown_file.touch()
+    with pytest.raises(InsecureDeleteException):
+        delete_song_folder(test_folder, get_in_memory_engine())
+
+
+def make_simple_song(folder: Path, title: str, artist: str = "JdP") -> Path:
+    song = folder / f"{title} - {artist}.mp3"
+    mf = MetadataFields(title=title, artist=artist)
+    data = create_test_mp3_data(metadata=mf)
+    song.write_bytes(data)
+    return song
+
+
+def test_dedup_removes_duplicates_also_in_subfolders(test_folder):
+    engine = get_in_memory_engine()
+    HeardSong.metadata.create_all(engine)
+
+    song_1 = make_simple_song(test_folder, "Song uno")
+    song_2 = make_simple_song(test_folder, "Song due")
+    song_3 = make_simple_song(test_folder, "Song tre")
+    folder_lvl_2 = test_folder / "lvl2"
+    folder_lvl_2.mkdir()
+    song_4 = make_simple_song(folder_lvl_2, "Song Four")
+    song_5 = make_simple_song(folder_lvl_2, "Song five")
+    folder_lvl_3 = folder_lvl_2 / "lvl3"
+    folder_lvl_3.mkdir()
+    song_6 = make_simple_song(folder_lvl_3, "Song Six")
+
+    session = sessionmaker(bind=engine)
+    session = session()
+    with session as s:
+        s.add_all([
+            HeardSong(file_name=song_1.name, name_hash=get_song_name_hash(SongFile(song_1))),
+            HeardSong(file_name=song_4.name, name_hash=get_song_name_hash(SongFile(song_4))),
+            HeardSong(file_name=song_6.name, name_hash=get_song_name_hash(SongFile(song_6))),
+        ])
+        s.commit()
+
+
+
+    dedup_song_folder(test_folder, engine)
+
+    assert not song_1.exists()
+    assert song_2.exists()
+    assert song_3.exists()
+    assert not song_4.exists()
+    assert song_5.exists()
+    assert not song_6.exists()
