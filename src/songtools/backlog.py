@@ -1,13 +1,12 @@
 import click
 from songtools.utils import echo
 from pathlib import Path
-from random import randint
 from sqlalchemy.orm import Session
 from sqlalchemy import Engine, select
 from songtools.db.models import BacklogSong, HeardSong
 from songtools import config
 
-from songtools.naming import has_cyrillic, build_correct_song_file_name, get_song_name_hash
+from songtools.naming import has_cyrillic, get_song_name_hash, rename_songs_from_metadata
 from songtools.song_file_types import (
     SongFile,
     SUPPORTED_MUSIC_TYPES,
@@ -68,27 +67,6 @@ def handle_music_files(root_path: Path) -> None:
             rename_songs_from_metadata(f, song)
         except OSError as e:
             echo(f"Can't rename file {f}  || Error: {e}", "ERR")
-
-
-def rename_songs_from_metadata(song_path: Path, song: SongFile) -> None:
-    """
-    Get artists and title from metadata and style it so it can be used
-    to rename files.
-
-    :param song_path: Path to the song file
-    :param song: Implementation of a song file object from metadata
-    """
-    new_name = build_correct_song_file_name(song.artists, song.title)
-    # Note: some filesystems don't like if I only change file casing
-    #       - that's why I have to make a tmp name first
-    if new_name.lower() != song_path.stem.lower():
-        song_path.rename(song_path.with_stem(new_name))
-        echo(f"Renamed {song_path} to {new_name}", "OK")
-    elif new_name != song_path.stem:
-        temp_name = new_name + str(randint(10000000, 99999999))
-        song_path = song_path.rename(song_path.with_stem(temp_name))
-        song_path.rename(song_path.with_stem(new_name))
-        echo(f"Fixed song casing {song_path} to {new_name}", "OK")
 
 
 def remove_empty_folders(root_path: Path) -> None:

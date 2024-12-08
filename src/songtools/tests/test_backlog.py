@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from songtools.conftest import create_test_mp3_data, MetadataFields
+from songtools.conftest import create_test_mp3_data, make_simple_song_file, MetadataFields
 from pathlib import Path
 from sqlalchemy import asc
 from sqlalchemy.orm import sessionmaker
@@ -161,16 +161,10 @@ def test_delete_removes_files_and_subfolders(test_folder):
     engine = get_in_memory_engine()
     HeardSong.metadata.create_all(engine)
 
-    song_1 = test_folder / "song_1.mp3"
-    mf = MetadataFields(title="Song uno", artist="JdPouch")
-    data = create_test_mp3_data(metadata=mf)
-    song_1.write_bytes(data)
+    song_1 = make_simple_song_file(test_folder, "Song uno", "JdPouch", filename="song_1.mp3")
     song_1_name_hash = get_song_name_hash(SongFile(song_1))
 
-    song_2 = test_folder / "song_2.mp3"
-    mf = MetadataFields(title="Song  Duo", artist="JdPouch")
-    data = create_test_mp3_data(metadata=mf)
-    song_2.write_bytes(data)
+    make_simple_song_file(test_folder, "Song Duo", "JdPouch", filename="song_2.mp3")
 
     one_level_dir = test_folder / "one_dir"
     one_level_dir.mkdir()
@@ -178,10 +172,7 @@ def test_delete_removes_files_and_subfolders(test_folder):
 
     two_level_dir = one_level_dir / "two_dir"
     two_level_dir.mkdir()
-    song_3 = two_level_dir / "song_3.mp3"
-    mf = MetadataFields(title="Song  Three", artist="JdVouch")
-    data = create_test_mp3_data(metadata=mf)
-    song_3.write_bytes(data)
+    make_simple_song_file(two_level_dir, "Song Three", "JdVouch", filename="song_3.mp3")
 
     delete_song_folder(test_folder, engine)
     assert not test_folder.exists()
@@ -194,15 +185,8 @@ def test_delete_removes_files_and_subfolders(test_folder):
 
 
 def test_existing_item_is_not_duplicated(test_folder):
-    song_1 = test_folder / "song_1.mp3"
-    mf = MetadataFields(title="Song uno", artist="JdPouch")
-    data = create_test_mp3_data(metadata=mf)
-    song_1.write_bytes(data)
-
-    song_2 = test_folder / "song_2.mp3"
-    mf = MetadataFields(title="Song uno", artist="JdPouch")
-    data = create_test_mp3_data(metadata=mf)
-    song_2.write_bytes(data)
+    make_simple_song_file(test_folder, "Song uno", filename="song_1.mp3")
+    make_simple_song_file(test_folder, "Song uno", filename="song_2.mp3")
 
     engine = get_in_memory_engine()
     HeardSong.metadata.create_all(engine)
@@ -222,28 +206,20 @@ def test_unknown_file_raises_exception(test_folder):
         delete_song_folder(test_folder, get_in_memory_engine())
 
 
-def make_simple_song(folder: Path, title: str, artist: str = "JdP") -> Path:
-    song = folder / f"{title} - {artist}.mp3"
-    mf = MetadataFields(title=title, artist=artist)
-    data = create_test_mp3_data(metadata=mf)
-    song.write_bytes(data)
-    return song
-
-
 def test_dedup_removes_duplicates_also_in_subfolders(test_folder):
     engine = get_in_memory_engine()
     HeardSong.metadata.create_all(engine)
 
-    song_1 = make_simple_song(test_folder, "Song uno")
-    song_2 = make_simple_song(test_folder, "Song due")
-    song_3 = make_simple_song(test_folder, "Song tre")
+    song_1 = make_simple_song_file(test_folder, "Song uno")
+    song_2 = make_simple_song_file(test_folder, "Song due")
+    song_3 = make_simple_song_file(test_folder, "Song tre")
     folder_lvl_2 = test_folder / "lvl2"
     folder_lvl_2.mkdir()
-    song_4 = make_simple_song(folder_lvl_2, "Song Four")
-    song_5 = make_simple_song(folder_lvl_2, "Song five")
+    song_4 = make_simple_song_file(folder_lvl_2, "Song Four")
+    song_5 = make_simple_song_file(folder_lvl_2, "Song five")
     folder_lvl_3 = folder_lvl_2 / "lvl3"
     folder_lvl_3.mkdir()
-    song_6 = make_simple_song(folder_lvl_3, "Song Six")
+    song_6 = make_simple_song_file(folder_lvl_3, "Song Six")
 
     session = sessionmaker(bind=engine)
     session = session()
@@ -254,8 +230,6 @@ def test_dedup_removes_duplicates_also_in_subfolders(test_folder):
             HeardSong(file_name=song_6.name, name_hash=get_song_name_hash(SongFile(song_6))),
         ])
         s.commit()
-
-
 
     dedup_song_folder(test_folder, engine)
 

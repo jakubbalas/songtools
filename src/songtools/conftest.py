@@ -45,6 +45,16 @@ def cleanup_tst_folder() -> None:
     pass
 
 
+def make_simple_song_file(folder: Path, title: str, artist: str = "JdP", filename: str|None = None) -> Path:
+    if filename is None:
+        filename =  f"{title} - {artist}.mp3"
+    song = folder / filename
+    mf = MetadataFields(title=title, artist=artist)
+    data = create_test_mp3_data(metadata=mf)
+    song.write_bytes(data)
+    return song
+
+
 @pytest.fixture
 def test_folder() -> Path:
     """Fixture to create a test folder and clean it up after the test is done.

@@ -1,14 +1,17 @@
 import re
 import string
 import hashlib
+from pathlib import Path
+from random import randint
 
 from functools import reduce
 from unidecode import unidecode
 
 from songtools.song_file_types import SongFile
+from songtools.utils import echo
 
 
-def build_correct_song_file_name(artists: list[str], orig_title: str) -> str:
+def  build_correct_song_file_name(artists: list[str], orig_title: str) -> str:
     """Get the filename from the metadata of the file.
     If the file has no metadata, return the styled filename.
 
@@ -20,7 +23,8 @@ def build_correct_song_file_name(artists: list[str], orig_title: str) -> str:
     orig_title = basic_music_file_style(orig_title)
     title = handle_title(orig_title)
     artists = [basic_music_file_style(a) for a in artists]
-    artists = handle_artists(artists, orig_title)
+
+    artists = handle_artists(artists, remove_original_mix(orig_title))
 
     return ", ".join(artists) + " - " + title
 
@@ -48,7 +52,6 @@ def handle_artists(artists: list[str], title: str) -> list[str]:
         artist, featuring = extract_featuring_artists(a)
         all_artists.append(artist)
         all_artists += featuring
-
     _, title_artists = extract_featuring_artists(title)
     title_artists = [basic_music_file_style(a) for a in title_artists]
     all_artists += title_artists
@@ -130,7 +133,7 @@ def capitalize(name: str) -> str:
 
     # Capitalize first character after characters: (,"
     name = re.sub(
-        r'[\(,"]\s*([a-z])',
+        r'[\(,"\[]\s*([a-z])',
         lambda match: f"{match.group(0)[0]}{match.group(1).upper()}",
         name,
     )
@@ -167,3 +170,24 @@ def get_song_name_hash(song: SongFile) -> str:
     """
     name = build_correct_song_file_name(song.artists, song.title) + song.path.suffix
     return hashlib.md5(name.lower().encode()).hexdigest()
+
+
+def rename_songs_from_metadata(song_path: Path, song: SongFile) -> None:
+    """
+    Get artists and title from metadata and style it so it can be used
+    to rename files.
+
+    :param song_path: Path to the song file
+    :param song: Implementation of a song file object from metadata
+    """
+    new_name = build_correct_song_file_name(song.artists, song.title)
+    # Note: some filesystems don't like if I only change file casing
+    #       - that's why I have to make a tmp name first
+    if new_name.lower() != song_path.stem.lower():
+        song_path.rename(song_path.with_stem(new_name))
+        echo(f"Renamed {song_path} to {new_name}", "OK")
+    elif new_name != song_path.stem:
+        temp_name = new_name + str(randint(10000000, 99999999))
+        song_path = song_path.rename(song_path.with_stem(temp_name))
+        song_path.rename(song_path.with_stem(new_name))
+        echo(f"Fixed song casing {song_path} to {new_name}", "OK")

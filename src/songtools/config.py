@@ -28,6 +28,7 @@ class Config:
     )
 
     backlog_path: str = env.str("BACKLOG_PATH")
+    collection_path: str = env.str("COLLECTION_PATH")
 
     log_store: bool = env.bool("LOG_SAVE", False)
     log_dir: str = env.str("LOG_DIR_PATH", "/tmp/")
