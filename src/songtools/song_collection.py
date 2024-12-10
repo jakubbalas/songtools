@@ -8,7 +8,11 @@ from copy import deepcopy
 from songtools import config
 from songtools.db.models import HeardSong, CollectionSong
 from songtools.naming import build_correct_song_file_name
-from songtools.song_file_types import SUPPORTED_MUSIC_TYPES, SongFile, UnableToExtractData
+from songtools.song_file_types import (
+    SUPPORTED_MUSIC_TYPES,
+    SongFile,
+    UnableToExtractData,
+)
 
 
 def show_collection_name_inconsistencies():
@@ -16,12 +20,16 @@ def show_collection_name_inconsistencies():
 
     inconsistencies = get_incorrectly_formatted_collection_names()
     for i in inconsistencies:
-        click.secho(f"rename: {i[0].absolute()} to {i[1]}",  fg="yellow")
+        click.secho(f"rename: {i[0].absolute()} to {i[1]}", fg="yellow")
 
 
 def list_collection_songs_paths() -> list[Path]:
     collection_path = Path(config.collection_path)
-    return [f for f in collection_path.rglob("*") if f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES]
+    return [
+        f
+        for f in collection_path.rglob("*")
+        if f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES
+    ]
 
 
 def get_collection_items():
@@ -47,7 +55,9 @@ def get_incorrectly_formatted_collection_names() -> list[(Path, str)]:
     return res
 
 
-def recreate_collection_records(collection_songs: dict[str, SongFile], db_engine: Engine):
+def recreate_collection_records(
+    collection_songs: dict[str, SongFile], db_engine: Engine
+):
     with Session(db_engine) as session:
         session.execute(delete(CollectionSong))
         session.commit()
@@ -56,26 +66,26 @@ def recreate_collection_records(collection_songs: dict[str, SongFile], db_engine
             db_song = CollectionSong(
                 name_hash=song.name_hash,
                 file_path=song.path.name,
-                file_size=song.file_size_kb
+                file_size=song.file_size_kb,
             )
             session.add(db_song)
         session.commit()
 
 
-def sync_collection_with_heard_songs(collection_songs: dict[str, SongFile], db_engine: Engine):
+def sync_collection_with_heard_songs(
+    collection_songs: dict[str, SongFile], db_engine: Engine
+):
     # TODO: sync to heard table insert / update
     # TODO: remove non-existing files from heard collection.
     collection_songs = deepcopy(collection_songs)
     with Session(db_engine) as session:
-        stm = select(HeardSong).where(HeardSong.in_collection == True)
+        stm = select(HeardSong).where(HeardSong.in_collection == True)  # noqa
         for song in session.scalars(stm).all():
             if song.name_hash not in collection_songs:
                 song.in_collection = False
                 session.commit()
             else:
                 del collection_songs[song.name_hash]
-
-
 
         for song_hash, song in collection_songs.items():
             item = session.scalars(
@@ -85,7 +95,7 @@ def sync_collection_with_heard_songs(collection_songs: dict[str, SongFile], db_e
                 item = HeardSong(
                     name_hash=song.name_hash,
                     file_name=song.path.name,
-                    in_collection=True
+                    in_collection=True,
                 )
                 session.add(item)
             else:

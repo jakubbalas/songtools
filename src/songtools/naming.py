@@ -1,15 +1,11 @@
 import re
 import string
-from pathlib import Path
-from random import randint
 
 from functools import reduce
 from unidecode import unidecode
 
-from songtools.utils import echo
 
-
-def  build_correct_song_file_name(artists: list[str], orig_title: str) -> str:
+def build_correct_song_file_name(artists: list[str], orig_title: str) -> str:
     """Get the filename from the metadata of the file.
     If the file has no metadata, return the styled filename.
 

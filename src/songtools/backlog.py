@@ -258,12 +258,12 @@ def delete_song_folder(folder: Path, db_engine: Engine) -> None:
         elif f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES:
             song = SongFile(f)
             with Session(db_engine) as session:
-                db_song = session.scalars(select(HeardSong).where(HeardSong.name_hash == song.name_hash)).first()
+                db_song = session.scalars(
+                    select(HeardSong).where(HeardSong.name_hash == song.name_hash)
+                ).first()
                 if not db_song:
                     db_song = HeardSong(
-                        name_hash=song.name_hash,
-                        file_name=f.name,
-                        in_collection=False
+                        name_hash=song.name_hash, file_name=f.name, in_collection=False
                     )
                     session.add(db_song)
                     session.commit()
@@ -272,7 +272,9 @@ def delete_song_folder(folder: Path, db_engine: Engine) -> None:
         elif f.is_file() and f.suffix in IRRELEVANT_SUFFIXES:
             f.unlink()
         elif f.is_file():
-            raise InsecureDeleteException(f"Refusing to delete directory, unknown file found: {f}?")
+            raise InsecureDeleteException(
+                f"Refusing to delete directory, unknown file found: {f}?"
+            )
         else:
             delete_song_folder(f, db_engine)
     folder.rmdir()
@@ -282,27 +284,43 @@ def dedup_song_folder(folder: Path, db_engine: Engine) -> None:
     """Remove all duplicates from the folder"""
     # TODO: implement deduplication in folder level, keep the larger item
     for f in folder.rglob("*"):
-        if f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES and not f.stem.startswith("._"):
+        if (
+            f.is_file()
+            and f.suffix in SUPPORTED_MUSIC_TYPES
+            and not f.stem.startswith("._")
+        ):
             try:
                 song = SongFile(f)
             except UnableToExtractData:
                 continue
 
             with Session(db_engine) as session:
-                heard_song = session.scalars(select(HeardSong).where(HeardSong.name_hash == song.name_hash)).first()
+                heard_song = session.scalars(
+                    select(HeardSong).where(HeardSong.name_hash == song.name_hash)
+                ).first()
                 if not heard_song:
                     continue
 
                 if heard_song.in_collection:
                     click.secho(f"Song is in collection {f}", fg="green")
-                    collection_song = session.scalars(select(CollectionSong).where(CollectionSong.name_hash == song.name_hash)).first()
+                    collection_song = session.scalars(
+                        select(CollectionSong).where(
+                            CollectionSong.name_hash == song.name_hash
+                        )
+                    ).first()
                     size_diff = song.file_size_kb - collection_song.file_size
                     if size_diff > SIZE_DIFFERENCE_THRESHOLD_KB:
-                        click.secho(f"Collection duplicate improvement Size difference too big {f}", fg="yellow")
+                        click.secho(
+                            f"Collection duplicate improvement Size difference too big {f}",
+                            fg="yellow",
+                        )
                     else:
-                        click.secho(f"Collection duplicate - size difference is ok {f} - {size_diff}kb", fg="green")
+                        click.secho(
+                            f"Collection duplicate - size difference is ok {f} - {size_diff}kb",
+                            fg="green",
+                        )
                         f.unlink()
-                else :
+                else:
                     click.secho(f"Duplicate found {f}", fg="green")
                     f.unlink()
 

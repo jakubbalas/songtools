@@ -2,7 +2,11 @@ from unittest.mock import patch
 
 import pytest
 
-from songtools.conftest import create_test_mp3_data, make_simple_song_file, MetadataFields
+from songtools.conftest import (
+    create_test_mp3_data,
+    make_simple_song_file,
+    MetadataFields,
+)
 from pathlib import Path
 from sqlalchemy import asc
 from sqlalchemy.orm import Session
@@ -10,7 +14,10 @@ from songtools.backlog import (
     clean_preimport_folder,
     IRRELEVANT_SUFFIXES,
     load_backlog_folder_files,
-    load_backlog_folder_metadata, delete_song_folder, InsecureDeleteException, dedup_song_folder,
+    load_backlog_folder_metadata,
+    delete_song_folder,
+    InsecureDeleteException,
+    dedup_song_folder,
 )
 from songtools.db.models import BacklogSong, HeardSong, CollectionSong
 from songtools.db.session import get_in_memory_engine
@@ -95,7 +102,6 @@ def test_remove_files_with_cyrillic(test_folder):
 def test_renaming_casing_only_works(test_folder):
     tst_folder = _prepare_dirty_backlog_folder(test_folder)
     clean_preimport_folder(tst_folder)
-    items = [f for f in test_folder.rglob("*")]
     assert (tst_folder / "mixed_folder/Jouch - Freeze.mp3").exists()
 
 
@@ -109,7 +115,7 @@ def test_expected_folder_structure_after_cleanup(test_folder):
 def test_dj_mixes_are_removed(test_folder, test_long_mp3_data):
     dj_mix = test_folder / "dj - mix.mp3"
     dj_mix.write_bytes(test_long_mp3_data)
-    with patch('songtools.backlog.MUSIC_MIX_MIN_SECONDS', 800):
+    with patch("songtools.backlog.MUSIC_MIX_MIN_SECONDS", 800):
         clean_preimport_folder(test_folder)
     assert not dj_mix.exists()
 
@@ -157,7 +163,9 @@ def test_delete_removes_files_and_subfolders(test_folder):
     engine = get_in_memory_engine()
     HeardSong.metadata.create_all(engine)
 
-    song_1 = make_simple_song_file(test_folder, "Song uno", "JdPouch", filename="song_1.mp3")
+    song_1 = make_simple_song_file(
+        test_folder, "Song uno", "JdPouch", filename="song_1.mp3"
+    )
     song_1_name_hash = SongFile(song_1).name_hash
 
     make_simple_song_file(test_folder, "Song Duo", "JdPouch", filename="song_2.mp3")
@@ -216,11 +224,13 @@ def test_dedup_removes_duplicates_also_in_subfolders(test_folder):
     song_6 = make_simple_song_file(folder_lvl_3, "Song Six")
 
     with Session(engine) as s:
-        s.add_all([
-            HeardSong(file_name=song_1.name, name_hash=SongFile(song_1).name_hash),
-            HeardSong(file_name=song_4.name, name_hash=SongFile(song_4).name_hash),
-            HeardSong(file_name=song_6.name, name_hash=SongFile(song_6).name_hash),
-        ])
+        s.add_all(
+            [
+                HeardSong(file_name=song_1.name, name_hash=SongFile(song_1).name_hash),
+                HeardSong(file_name=song_4.name, name_hash=SongFile(song_4).name_hash),
+                HeardSong(file_name=song_6.name, name_hash=SongFile(song_6).name_hash),
+            ]
+        )
         s.commit()
 
     dedup_song_folder(test_folder, engine)
@@ -238,21 +248,44 @@ def test_duplicates_from_collection_are_handled(test_folder, caplog):
     HeardSong.metadata.create_all(engine)
     CollectionSong.metadata.create_all(engine)
 
-    song_1 = SongFile(make_simple_song_file(test_folder, "Song uno", source="silence15min.mp3"))
+    song_1 = SongFile(
+        make_simple_song_file(test_folder, "Song uno", source="silence15min.mp3")
+    )
     song_2 = SongFile(make_simple_song_file(test_folder, "Song due"))
 
     with Session(engine) as session:
-        session.add_all([
-            CollectionSong(name_hash=song_1.name_hash, file_path="bigger_song1.mp3", file_size=1234),
-            HeardSong(name_hash=song_1.name_hash, file_name="path/bigger_song1.mp3", in_collection=True),
-            CollectionSong(name_hash=song_2.name_hash, file_path="path/smaller_song2.mp3", file_size=700000),
-            HeardSong(name_hash=song_2.name_hash, file_name="smaller_song1.mp3", in_collection=True),
-        ])
+        session.add_all(
+            [
+                CollectionSong(
+                    name_hash=song_1.name_hash,
+                    file_path="bigger_song1.mp3",
+                    file_size=1234,
+                ),
+                HeardSong(
+                    name_hash=song_1.name_hash,
+                    file_name="path/bigger_song1.mp3",
+                    in_collection=True,
+                ),
+                CollectionSong(
+                    name_hash=song_2.name_hash,
+                    file_path="path/smaller_song2.mp3",
+                    file_size=700000,
+                ),
+                HeardSong(
+                    name_hash=song_2.name_hash,
+                    file_name="smaller_song1.mp3",
+                    in_collection=True,
+                ),
+            ]
+        )
         session.commit()
 
-    with patch('songtools.backlog.click.secho') as mock_echo:
+    with patch("songtools.backlog.click.secho") as mock_echo:
         dedup_song_folder(test_folder, engine)
-        mock_echo.assert_any_call(f"Collection duplicate improvement Size difference too big {song_1.path}", fg="yellow")
+        mock_echo.assert_any_call(
+            f"Collection duplicate improvement Size difference too big {song_1.path}",
+            fg="yellow",
+        )
     existing_songs = [x for x in test_folder.rglob("*")]
     assert len(existing_songs) == 1
     assert existing_songs[0] == song_1.path

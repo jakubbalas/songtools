@@ -92,9 +92,16 @@ def test_featuring_extraction(test_in, test_out):
         (["JDP", "Jake"], "frequencies feat. Jake", "Jake, Jdp - Frequencies"),
         (["JDP"], "frequencies (jake remix)", "Jdp - Frequencies (Jake Remix)"),
         (["JDP"], 'frequencies ("jake" remix)', 'Jdp - Frequencies ("Jake" Remix)'),
-        (["Tero"], "Party Fight feat. Jake_holm (Original Mix)", "Jake Holm, Tero - Party Fight"),
-        (["JDP"], "Anything [but the girl] (JDP remix)", "Jdp - Anything [But the Girl] (Jdp Remix)"),
-
+        (
+            ["Tero"],
+            "Party Fight feat. Jake_holm (Original Mix)",
+            "Jake Holm, Tero - Party Fight",
+        ),
+        (
+            ["JDP"],
+            "Anything [but the girl] (JDP remix)",
+            "Jdp - Anything [But the Girl] (Jdp Remix)",
+        ),
     ],
 )
 def test_build_correct_song_file_name(test_artists, test_title, test_out):

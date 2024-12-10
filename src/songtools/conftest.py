@@ -46,14 +46,14 @@ def cleanup_tst_folder() -> None:
 
 
 def make_simple_song_file(
-        folder: Path,
-        title: str,
-        artist: str = "JdP",
-        filename: str|None = None,
-        source: str = "memory"
+    folder: Path,
+    title: str,
+    artist: str = "JdP",
+    filename: str | None = None,
+    source: str = "memory",
 ) -> Path:
     if filename is None:
-        filename =  f"{title} - {artist}.mp3"
+        filename = f"{title} - {artist}.mp3"
     song = folder / filename
     mf = MetadataFields(title=title, artist=artist)
 

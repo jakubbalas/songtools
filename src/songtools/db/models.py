@@ -9,7 +9,7 @@ class Base(DeclarativeBase):
 
 
 class BacklogSong(Base):
-    __tablename__ = ("song_backlog")
+    __tablename__ = "song_backlog"
 
     path: Mapped[str] = mapped_column(String(500), primary_key=True)
     title: Mapped[str] = mapped_column(String(80), nullable=True)

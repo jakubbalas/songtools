@@ -4,10 +4,14 @@ from songtools.backlog import (
     clean_preimport_folder,
     delete_song_folder,
     load_backlog_folder_files,
-    load_backlog_folder_metadata, dedup_song_folder,
+    load_backlog_folder_metadata,
+    dedup_song_folder,
 )
 
-from songtools.song_collection import show_collection_name_inconsistencies, sync_collection_items
+from songtools.song_collection import (
+    show_collection_name_inconsistencies,
+    sync_collection_items,
+)
 from songtools.db.session import get_engine
 
 
@@ -86,6 +90,7 @@ def delete_folder(path: str) -> None:
     delete_song_folder(Path(path), get_engine())
     click.echo("Done")
 
+
 @backlog.command()
 @click.argument("path")
 def dedup_folder(path: str) -> None:
@@ -103,6 +108,7 @@ def collection() -> None:
 def naming_check() -> None:
     click.echo("Checking correct names in collection")
     show_collection_name_inconsistencies()
+
 
 @collection.command()
 def sync_collection() -> None:
