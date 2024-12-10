@@ -252,8 +252,10 @@ class InsecureDeleteException(Exception):
 def delete_song_folder(folder: Path, db_engine: Engine) -> None:
     """Recursively remove all files and store data in the db"""
     # TODO: implement safeguard
-    for f in folder.rglob("*"):
-        if f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES:
+    for f in folder.iterdir():
+        if f.is_file() and f.stem.startswith("._"):
+            f.unlink()
+        elif f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES:
             song = SongFile(f)
             with Session(db_engine) as session:
                 db_song = session.scalars(select(HeardSong).where(HeardSong.name_hash == song.name_hash)).first()
@@ -280,7 +282,7 @@ def dedup_song_folder(folder: Path, db_engine: Engine) -> None:
     """Remove all duplicates from the folder"""
     # TODO: implement deduplication in folder level, keep the larger item
     for f in folder.rglob("*"):
-        if f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES:
+        if f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES and not f.stem.startswith("._"):
             try:
                 song = SongFile(f)
             except UnableToExtractData:
