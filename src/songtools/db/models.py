@@ -9,7 +9,7 @@ class Base(DeclarativeBase):
 
 
 class BacklogSong(Base):
-    __tablename__ = "songs_backlog"
+    __tablename__ = ("song_backlog")
 
     path: Mapped[str] = mapped_column(String(500), primary_key=True)
     title: Mapped[str] = mapped_column(String(80), nullable=True)
@@ -31,3 +31,11 @@ class HeardSong(Base):
     file_name: Mapped[str] = mapped_column(String(300), nullable=True)
     in_collection: Mapped[bool] = mapped_column(Boolean, nullable=True)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+
+
+class CollectionSong(Base):
+    __tablename__ = "song_collection"
+
+    name_hash: Mapped[str] = mapped_column(String(300), primary_key=True)
+    file_path: Mapped[str] = mapped_column(String(500), nullable=False)
+    file_size: Mapped[int] = mapped_column(Integer, nullable=False)

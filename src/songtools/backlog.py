@@ -1,12 +1,14 @@
+from random import randint
+
 import click
 from songtools.utils import echo
 from pathlib import Path
 from sqlalchemy.orm import Session
 from sqlalchemy import Engine, select
-from songtools.db.models import BacklogSong, HeardSong
+from songtools.db.models import BacklogSong, HeardSong, CollectionSong
 from songtools import config
 
-from songtools.naming import has_cyrillic, get_song_name_hash, rename_songs_from_metadata
+from songtools.naming import has_cyrillic, build_correct_song_file_name
 from songtools.song_file_types import (
     SongFile,
     SUPPORTED_MUSIC_TYPES,
@@ -35,6 +37,7 @@ IRRELEVANT_SUFFIXES = [
     ".url",
 ]
 MUSIC_MIX_MIN_SECONDS = 1000
+SIZE_DIFFERENCE_THRESHOLD_KB = 512
 META_FILES = [".DS_Store", "desktop.ini", "booklet.pdf"]
 
 
@@ -249,16 +252,14 @@ class InsecureDeleteException(Exception):
 def delete_song_folder(folder: Path, db_engine: Engine) -> None:
     """Recursively remove all files and store data in the db"""
     # TODO: implement safeguard
-    for f in folder.iterdir():
+    for f in folder.rglob("*"):
         if f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES:
             song = SongFile(f)
-            name_hash = get_song_name_hash(song)
-
             with Session(db_engine) as session:
-                db_song = session.scalars(select(HeardSong).where(HeardSong.name_hash == name_hash)).first()
+                db_song = session.scalars(select(HeardSong).where(HeardSong.name_hash == song.name_hash)).first()
                 if not db_song:
                     db_song = HeardSong(
-                        name_hash=name_hash,
+                        name_hash=song.name_hash,
                         file_name=f.name,
                         in_collection=False
                     )
@@ -277,7 +278,6 @@ def delete_song_folder(folder: Path, db_engine: Engine) -> None:
 
 def dedup_song_folder(folder: Path, db_engine: Engine) -> None:
     """Remove all duplicates from the folder"""
-    # TODO: implement deduplication logic for in_collection items and file size check
     # TODO: implement deduplication in folder level, keep the larger item
     for f in folder.rglob("*"):
         if f.is_file() and f.suffix in SUPPORTED_MUSIC_TYPES:
@@ -285,9 +285,42 @@ def dedup_song_folder(folder: Path, db_engine: Engine) -> None:
                 song = SongFile(f)
             except UnableToExtractData:
                 continue
-            name_hash = get_song_name_hash(song)
+
             with Session(db_engine) as session:
-                db_song = session.scalars(select(HeardSong).where(HeardSong.name_hash == name_hash)).first()
-                if db_song:
+                heard_song = session.scalars(select(HeardSong).where(HeardSong.name_hash == song.name_hash)).first()
+                if not heard_song:
+                    continue
+
+                if heard_song.in_collection:
+                    click.secho(f"Song is in collection {f}", fg="green")
+                    collection_song = session.scalars(select(CollectionSong).where(CollectionSong.name_hash == song.name_hash)).first()
+                    size_diff = song.file_size_kb - collection_song.file_size
+                    if size_diff > SIZE_DIFFERENCE_THRESHOLD_KB:
+                        click.secho(f"Collection duplicate improvement Size difference too big {f}", fg="yellow")
+                    else:
+                        click.secho(f"Collection duplicate - size difference is ok {f} - {size_diff}kb", fg="green")
+                        f.unlink()
+                else :
                     click.secho(f"Duplicate found {f}", fg="green")
                     f.unlink()
+
+
+def rename_songs_from_metadata(song_path: Path, song: SongFile) -> None:
+    """
+    Get artists and title from metadata and style it so it can be used
+    to rename files.
+
+    :param song_path: Path to the song file
+    :param song: Implementation of a song file object from metadata
+    """
+    new_name = build_correct_song_file_name(song.artists, song.title)
+    # Note: some filesystems don't like if I only change file casing
+    #       - that's why I have to make a tmp name first
+    if new_name.lower() != song_path.stem.lower():
+        song_path.rename(song_path.with_stem(new_name))
+        echo(f"Renamed {song_path} to {new_name}", "OK")
+    elif new_name != song_path.stem:
+        temp_name = new_name + str(randint(10000000, 99999999))
+        song_path = song_path.rename(song_path.with_stem(temp_name))
+        song_path.rename(song_path.with_stem(new_name))
+        echo(f"Fixed song casing {song_path} to {new_name}", "OK")

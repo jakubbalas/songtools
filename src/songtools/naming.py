@@ -1,13 +1,11 @@
 import re
 import string
-import hashlib
 from pathlib import Path
 from random import randint
 
 from functools import reduce
 from unidecode import unidecode
 
-from songtools.song_file_types import SongFile
 from songtools.utils import echo
 
 
@@ -160,34 +158,3 @@ def extract_featuring_artists(title) -> (str, list[str]):
             title = title.replace(re.search(regex[0], title, re.I).group(0), regex[1])
 
     return title, artists
-
-
-def get_song_name_hash(song: SongFile) -> str:
-    """Get a hash from the song name.
-
-    :param song: Song file data
-    :return: hashed name
-    """
-    name = build_correct_song_file_name(song.artists, song.title) + song.path.suffix
-    return hashlib.md5(name.lower().encode()).hexdigest()
-
-
-def rename_songs_from_metadata(song_path: Path, song: SongFile) -> None:
-    """
-    Get artists and title from metadata and style it so it can be used
-    to rename files.
-
-    :param song_path: Path to the song file
-    :param song: Implementation of a song file object from metadata
-    """
-    new_name = build_correct_song_file_name(song.artists, song.title)
-    # Note: some filesystems don't like if I only change file casing
-    #       - that's why I have to make a tmp name first
-    if new_name.lower() != song_path.stem.lower():
-        song_path.rename(song_path.with_stem(new_name))
-        echo(f"Renamed {song_path} to {new_name}", "OK")
-    elif new_name != song_path.stem:
-        temp_name = new_name + str(randint(10000000, 99999999))
-        song_path = song_path.rename(song_path.with_stem(temp_name))
-        song_path.rename(song_path.with_stem(new_name))
-        echo(f"Fixed song casing {song_path} to {new_name}", "OK")

@@ -1,3 +1,5 @@
+import hashlib
+
 import click
 import mutagen
 import math
@@ -5,9 +7,9 @@ import math
 from abc import ABC, abstractmethod
 from pathlib import Path
 from songtools import config as config
+from songtools.naming import build_correct_song_file_name
 
-
-SUPPORTED_MUSIC_TYPES = [".mp3", ".flac", ".wav", ".m4a"]
+SUPPORTED_MUSIC_TYPES = [".mp3", ".flac", ".wav", ".m4a", ".mp4"]
 
 
 class UnsupportedSongType(Exception):
@@ -85,7 +87,7 @@ class SongFile:
             return ID3File(self.path)
         elif sfx == ".flac":
             return FlacFile(self.path)
-        elif sfx == ".m4a":
+        elif sfx == ".m4a" or sfx == ".mp4":
             return M4AFile(self.path)
         else:
             raise UnsupportedSongType(f"Song File {self.path} is not supported.")
@@ -169,6 +171,11 @@ class SongFile:
         if not self.metadata:
             return 0
         return self.metadata.energy
+
+    @property
+    def name_hash(self):
+        name = build_correct_song_file_name(self.artists, self.title)
+        return hashlib.md5(name.lower().encode()).hexdigest()
 
     def _get_artists_from_filename(self) -> str:
         """Fallback method to extract artists from filename."""

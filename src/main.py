@@ -7,7 +7,7 @@ from songtools.backlog import (
     load_backlog_folder_metadata, dedup_song_folder,
 )
 
-from songtools.song_collection import show_collection_name_inconsistencies
+from songtools.song_collection import show_collection_name_inconsistencies, sync_collection_items
 from songtools.db.session import get_engine
 
 
@@ -87,9 +87,7 @@ def delete_folder(path: str) -> None:
     click.echo("Done")
 
 @backlog.command()
-@click.argument(
-    "path",
-)
+@click.argument("path")
 def dedup_folder(path: str) -> None:
     click.echo("Removing duplicates from folder")
     dedup_song_folder(Path(path), get_engine())
@@ -105,6 +103,12 @@ def collection() -> None:
 def naming_check() -> None:
     click.echo("Checking correct names in collection")
     show_collection_name_inconsistencies()
+
+@collection.command()
+def sync_collection() -> None:
+    click.echo("Syncing collection")
+    sync_collection_items(get_engine())
+    click.echo("Done")
 
 
 if __name__ == "__main__":
