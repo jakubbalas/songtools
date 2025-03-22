@@ -82,12 +82,18 @@ def load_backlog_folder_meta(path_select: str) -> None:
 
 
 @backlog.command()
+@click.option(
+    "--keep-folder",
+    default=False,
+    is_flag=True,
+    help="Delete everything inside the folder but keep the enclosing folder",
+)
 @click.argument(
     "path",
 )
-def delete_folder(path: str) -> None:
+def delete_folder(path: str, keep_folder: bool) -> None:
     click.echo("Deleting folder")
-    delete_song_folder(Path(path), get_engine())
+    delete_song_folder(Path(path), get_engine(), keep_folder)
     click.echo("Done")
 
 

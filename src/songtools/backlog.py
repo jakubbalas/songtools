@@ -249,7 +249,7 @@ class InsecureDeleteException(Exception):
     pass
 
 
-def delete_song_folder(folder: Path, db_engine: Engine) -> None:
+def delete_song_folder(folder: Path, db_engine: Engine, keep_folder=False) -> None:
     """Recursively remove all files and store data in the db"""
     # TODO: implement safeguard
     for f in folder.iterdir():
@@ -277,7 +277,8 @@ def delete_song_folder(folder: Path, db_engine: Engine) -> None:
             )
         else:
             delete_song_folder(f, db_engine)
-    folder.rmdir()
+    if not keep_folder:
+        folder.rmdir()
 
 
 def dedup_song_folder(folder: Path, db_engine: Engine) -> None:
